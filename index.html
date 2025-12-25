@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>马年 · 手势粒子祝福 | Three.js + MediaPipe Hands</title>
+  <title>马年红包 · 手势召唤祝福</title>
 
-  <!-- ES Module Shims (Import Maps for broader browser support) -->
+  <!-- ES Module Shims (Import Maps) -->
   <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -33,29 +33,28 @@
   <style>
     :root{
       --gold:#d4af37;
-      --gold2:#ffdc7a;
+      --gold2:#f5d77a;
       --red:#b11226;
-      --red2:#ff2b4a;
-      --ink:#060507;
-      --panel: rgba(10, 6, 8, .62);
-      --panel2: rgba(6, 4, 5, .45);
+      --red2:#ff2a4f;
+      --ink:#050607;
+      --panel: rgba(10,10,12,.62);
+      --panel2: rgba(0,0,0,.45);
       --line: rgba(212,175,55,.35);
       --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.68);
-      --ok: rgba(212,175,55,.92);
-      --warn: rgba(255,80,80,.92);
+      --muted: rgba(255,255,255,.65);
     }
 
     html,body{
       height:100%;
       margin:0;
-      background: radial-gradient(120% 120% at 50% 30%, #16050a 0%, #070509 55%, #040307 100%);
+      background: radial-gradient(140% 140% at 50% 28%, #140306 0%, #070608 55%, #040406 100%);
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", Segoe UI, Roboto, Helvetica, Arial;
       overflow:hidden;
     }
 
     #app{ position:fixed; inset:0; }
+
     canvas#gl{
       position:absolute; inset:0;
       width:100%; height:100%;
@@ -63,25 +62,24 @@
       touch-action:none;
     }
 
-    /* Cinematic overlays */
-    .cinema-vignette{
+    /* cinematic vignette + haze */
+    .cinema{
       position:absolute; inset:0;
       pointer-events:none;
       background:
-        radial-gradient(120% 120% at 50% 42%, rgba(0,0,0,0) 42%, rgba(0,0,0,.64) 100%),
-        radial-gradient(70% 60% at 55% 0%, rgba(212,175,55,.12) 0%, rgba(0,0,0,0) 60%),
-        radial-gradient(70% 60% at 35% 0%, rgba(177,18,38,.12) 0%, rgba(0,0,0,0) 60%),
-        linear-gradient(180deg, rgba(177,18,38,.10) 0%, rgba(0,0,0,0) 42%);
-      mix-blend-mode: screen;
-      opacity:.92;
+        radial-gradient(120% 120% at 50% 42%, rgba(0,0,0,0) 40%, rgba(0,0,0,.62) 100%),
+        radial-gradient(90% 60% at 50% 0%, rgba(212,175,55,.12) 0%, rgba(0,0,0,0) 60%),
+        linear-gradient(180deg, rgba(177,18,38,.10) 0%, rgba(0,0,0,0) 45%);
+      mix-blend-mode:screen;
+      opacity:.95;
     }
-    .film-grain{
+    .grain{
       position:absolute; inset:-20%;
       pointer-events:none;
       background-image:
-        repeating-linear-gradient(0deg, rgba(255,255,255,.028) 0 1px, rgba(0,0,0,0) 1px 3px),
-        repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 1px, rgba(0,0,0,0) 1px 4px);
-      opacity:.24;
+        repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, rgba(0,0,0,0) 1px 3px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, rgba(0,0,0,0) 1px 4px);
+      opacity:.22;
       transform:rotate(2deg);
       animation: grain 7s linear infinite;
       mix-blend-mode:overlay;
@@ -93,99 +91,56 @@
       100%{ transform:translate3d(-2%, -2%, 0) rotate(2deg); }
     }
 
-    /* HUD */
     .hud{
       position:absolute;
       left:12px; right:12px; top:12px;
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
+      display:flex; justify-content:center;
       pointer-events:none;
     }
     .panel{
       pointer-events:auto;
-      flex:1 1 auto;
-      max-width:980px;
+      width:min(980px, calc(100vw - 24px));
       padding:12px 12px 10px;
       border:1px solid var(--line);
       border-radius:14px;
       background:linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%);
-      box-shadow: 0 14px 40px rgba(0,0,0,.50);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
       backdrop-filter: blur(10px);
-      position:relative;
-      overflow:hidden;
     }
-    .panel:before{
-      content:"";
-      position:absolute; inset:-2px;
-      background:
-        radial-gradient(70% 120% at 20% 0%, rgba(212,175,55,.20), rgba(0,0,0,0) 55%),
-        radial-gradient(70% 120% at 80% 0%, rgba(177,18,38,.18), rgba(0,0,0,0) 55%);
-      pointer-events:none;
-    }
-    .row{
-      position:relative;
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-    .brand{
-      display:flex; gap:10px; align-items:center;
-      min-width:320px;
-    }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .brand{ display:flex; gap:10px; align-items:center; min-width:260px; }
     .badge{
       width:12px; height:12px; border-radius:999px;
       background:var(--gold);
-      box-shadow: 0 0 0 2px rgba(212,175,55,.18), 0 0 18px rgba(212,175,55,.55);
+      box-shadow: 0 0 0 2px rgba(212,175,55,.18), 0 0 18px rgba(212,175,55,.45);
     }
-    .title{
-      font-weight:820;
-      letter-spacing:.4px;
-      font-size:14px;
-      line-height:1.2;
-    }
-    .subtitle{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:2px;
-    }
+    .title{ font-weight:800; letter-spacing:.4px; font-size:14px; line-height:1.2; }
+    .subtitle{ font-size:12px; color:var(--muted); margin-top:2px; }
+    .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-left:auto; }
 
-    .controls{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-      margin-left:auto;
-    }
     button{
       pointer-events:auto;
       appearance:none;
-      border:1px solid rgba(212,175,55,.40);
+      border:1px solid rgba(212,175,55,.38);
       color:var(--text);
-      background:linear-gradient(180deg, rgba(177,18,38,.30), rgba(0,0,0,.22));
+      background:linear-gradient(180deg, rgba(177,18,38,.28), rgba(0,0,0,.25));
       border-radius:12px;
       padding:10px 12px;
       font-size:12px;
       font-weight:800;
       letter-spacing:.2px;
-      box-shadow: 0 10px 24px rgba(0,0,0,.40);
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
       cursor:pointer;
       user-select:none;
     }
-    button:active{ transform: translateY(1px); }
     button.secondary{
       border-color: rgba(255,255,255,.14);
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
       color: rgba(255,255,255,.86);
     }
-    button.danger{
-      border-color: rgba(255,80,80,.25);
-      background: linear-gradient(180deg, rgba(255,43,74,.14), rgba(0,0,0,.22));
-    }
+    button:active{ transform: translateY(1px); }
 
     .tips{
-      position:relative;
       margin-top:10px;
       padding-top:10px;
       border-top:1px solid rgba(212,175,55,.22);
@@ -193,7 +148,7 @@
       gap:10px;
       flex-wrap:wrap;
       font-size:12px;
-      color:rgba(255,255,255,.80);
+      color:rgba(255,255,255,.78);
     }
     .chip{
       border:1px solid rgba(255,255,255,.12);
@@ -203,23 +158,14 @@
       display:inline-flex;
       gap:8px;
       align-items:center;
-      white-space:nowrap;
     }
-    .chip b{ color:rgba(255,255,255,.94); font-weight:900; }
-    .chip em{
-      font-style:normal;
-      color: rgba(212,175,55,.92);
-      font-weight:800;
-    }
+    .chip b{ color:rgba(255,255,255,.92); font-weight:900; }
 
     .status{
-      position:relative;
       margin-left:auto;
       font-size:12px;
       color:rgba(255,255,255,.72);
       display:flex; align-items:center; gap:8px;
-      min-width: 260px;
-      justify-content:flex-end;
     }
     .led{
       width:8px; height:8px; border-radius:999px;
@@ -230,17 +176,8 @@
       background: var(--gold);
       box-shadow: 0 0 0 2px rgba(212,175,55,.16), 0 0 16px rgba(212,175,55,.55);
     }
-    .modeBadge{
-      padding:5px 8px;
-      border-radius:999px;
-      border:1px solid rgba(212,175,55,.26);
-      background: rgba(0,0,0,.20);
-      color: rgba(255,255,255,.86);
-      font-weight:800;
-      letter-spacing:.2px;
-    }
 
-    /* Video Focus overlay (cinematic card) */
+    /* Focus overlay */
     .focusOverlay{
       position:absolute; inset:0;
       display:flex;
@@ -258,1315 +195,1562 @@
     }
     .focusCard{
       pointer-events:auto;
-      width:min(920px, calc(100vw - 24px));
+      width:min(820px, calc(100vw - 24px));
       border-radius:18px;
       border:1px solid rgba(212,175,55,.42);
-      background: linear-gradient(180deg, rgba(0,0,0,.50), rgba(10,7,9,.72));
-      box-shadow: 0 22px 70px rgba(0,0,0,.62);
+      background: linear-gradient(180deg, rgba(0,0,0,.52), rgba(8,12,14,.62));
+      box-shadow: 0 22px 70px rgba(0,0,0,.58);
       backdrop-filter: blur(12px);
-      padding:12px;
+      padding:14px 14px 12px;
       position:relative;
       overflow:hidden;
     }
     .focusCard:before{
       content:"";
       position:absolute; inset:-2px;
-      background:
-        radial-gradient(70% 120% at 20% 0%, rgba(212,175,55,.18), rgba(0,0,0,0) 60%),
-        radial-gradient(70% 120% at 80% 0%, rgba(177,18,38,.14), rgba(0,0,0,0) 60%);
+      background: radial-gradient(60% 120% at 20% 0%, rgba(212,175,55,.18), rgba(0,0,0,0) 55%),
+                  radial-gradient(60% 120% at 80% 0%, rgba(177,18,38,.16), rgba(0,0,0,0) 55%);
       pointer-events:none;
     }
-    .focusTop{
-      position:relative;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .focusTitle{
+    .focusCard h3{
       margin:0;
       font-size:14px;
-      letter-spacing:.4px;
-      font-weight:920;
-      color: rgba(255,255,255,.92);
+      letter-spacing:.5px;
+      position:relative;
     }
-    .focusHint{
-      margin-left:auto;
+    .focusCard p{
+      margin:8px 0 0;
+      font-size:14px;
+      line-height:1.55;
+      color: rgba(255,255,255,.90);
+      position:relative;
+      white-space:pre-wrap;
+    }
+    .small{
+      margin-top:10px;
       font-size:12px;
-      color: rgba(255,255,255,.68);
+      color: rgba(255,255,255,.65);
+      position:relative;
       display:flex;
+      gap:10px;
       align-items:center;
-      gap:8px;
+      justify-content:space-between;
+      flex-wrap:wrap;
     }
     .kbd{
       border:1px solid rgba(255,255,255,.14);
       background: rgba(255,255,255,.06);
       border-radius:10px;
       padding:6px 10px;
-      white-space:nowrap;
     }
 
-    .videoWrap{
-      position:relative;
-      border-radius:14px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.10);
-      background: radial-gradient(120% 120% at 50% 30%, rgba(212,175,55,.10), rgba(0,0,0,.55));
-    }
-    video#horseVid{
-      width:100%;
-      height:min(46vh, 420px);
-      object-fit:cover;
-      display:block;
-      filter: contrast(1.05) saturate(1.10);
-    }
-    .videoGlow{
-      pointer-events:none;
-      position:absolute; inset:-1px;
-      background:
-        radial-gradient(80% 140% at 50% 30%, rgba(212,175,55,.18), rgba(0,0,0,0) 60%),
-        radial-gradient(80% 140% at 50% 90%, rgba(177,18,38,.12), rgba(0,0,0,0) 60%);
-      mix-blend-mode: screen;
-      opacity: .95;
-    }
-
-    .idiomLine{
-      position:relative;
-      margin-top:10px;
-      display:flex;
-      align-items:baseline;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .idiomText{
-      font-size:18px;
-      font-weight:960;
-      letter-spacing: 1.4px;
-      color: rgba(255,255,255,.95);
-      text-shadow:
-        0 0 12px rgba(212,175,55,.26),
-        0 0 22px rgba(212,175,55,.18),
-        0 0 18px rgba(177,18,38,.14);
-    }
-    .idiomSub{
-      font-size:12px;
-      color: rgba(255,255,255,.70);
-    }
-
-    /* Hidden camera (still required by MediaPipe) */
     video#cam{
       position:absolute;
       right:12px; bottom:12px;
       width:120px; height:160px;
       opacity:0;
       pointer-events:none;
-      transform: translateZ(0);
-    }
-
-    .toast{
-      position:absolute;
-      left:50%;
-      top:18px;
-      transform: translateX(-50%);
-      pointer-events:none;
-      opacity:0;
-      transition: opacity .18s ease, transform .18s ease;
-      padding:10px 12px;
-      border-radius:999px;
-      border:1px solid rgba(212,175,55,.28);
-      background: rgba(0,0,0,.36);
-      backdrop-filter: blur(10px);
-      color: rgba(255,255,255,.88);
-      font-size:12px;
-      box-shadow: 0 16px 48px rgba(0,0,0,.45);
-      max-width: calc(100vw - 24px);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .toast.show{
-      opacity:1;
-      transform: translateX(-50%) translateY(6px);
     }
 
     @media (max-width:420px){
-      .brand{ min-width: 260px; }
+      .brand{ min-width: 220px; }
       .panel{ padding:10px; }
       button{ padding:9px 10px; }
       .tips{ gap:8px; }
-      .idiomText{ font-size:16px; }
     }
   </style>
 </head>
 
 <body>
-  <div id="app">
-    <canvas id="gl"></canvas>
-    <div class="cinema-vignette"></div>
-    <div class="film-grain"></div>
+<div id="app">
+  <canvas id="gl"></canvas>
+  <div class="cinema"></div>
+  <div class="grain"></div>
 
-    <div class="toast" id="toast"></div>
-
-    <div class="hud">
-      <div class="panel">
-        <div class="row">
-          <div class="brand">
-            <span class="badge"></span>
-            <div>
-              <div class="title">马年手势粒子祝福 · 金红辉光</div>
-              <div class="subtitle">Three.js / WebGL · MediaPipe Hands · 选择性辉光 Bloom · “马”字粒子凝聚成语</div>
-            </div>
-          </div>
-
-          <div class="controls">
-            <button id="btnStart">开启手势识别（相机）</button>
-            <button id="btnIdiom" class="secondary">随机成语</button>
-            <button id="btnReset" class="secondary">重置</button>
-            <button id="btnHelp" class="secondary">手势提示</button>
-            <button id="btnFS" class="secondary">全屏</button>
-          </div>
-
-          <div class="status">
-            <span id="led" class="led"></span>
-            <span class="modeBadge" id="modeBadge">状态：合拢成语</span>
-            <span id="statusText">提示：先点击“开启手势识别”授权相机（GitHub Pages 必须 https）。</span>
+  <div class="hud">
+    <div class="panel">
+      <div class="row">
+        <div class="brand">
+          <span class="badge"></span>
+          <div>
+            <div class="title">马年红包 · 手势召唤祝福</div>
+            <div class="subtitle">Three.js / WebGL · MediaPipe Hands · 电影感辉光</div>
           </div>
         </div>
 
-        <div class="tips" id="tips" style="display:none;">
-          <span class="chip"><b>握拳</b> → <em>合拢成语</em>（每次合拢随机成语）</span>
-          <span class="chip"><b>五指张开</b> → <em>散开漂浮</em></span>
-          <span class="chip"><b>张开手掌移动</b> → <em>旋转视角</em>（仅散开态）</span>
-          <span class="chip"><b>三指抓</b>（拇指+食指+中指合拢）→ <em>视频放大态</em></span>
-          <span class="chip"><b>鼠标/触控拖拽</b> → 旋转视角（手势未开启时可用）</span>
+        <div class="controls">
+          <button id="btnStart">启用手势</button>
+          <button id="btnReset" class="secondary">重置</button>
+          <button id="btnHelp" class="secondary">玩法提示</button>
+          <button id="btnMusic" class="secondary">音乐：关</button>
+        </div>
+
+        <div class="status">
+          <span id="led" class="led"></span>
+          <span id="statusText">默认：合拢成语（可用鼠标拖拽/点击作为备用）</span>
         </div>
       </div>
-    </div>
 
-    <div id="focusOverlay" class="focusOverlay">
-      <div class="focusCard">
-        <div class="focusTop">
-          <h3 class="focusTitle" id="focusTitle">视频放大态</h3>
-          <div class="focusHint">
-            <span class="kbd">握拳：回到合拢</span>
-            <span class="kbd">五指张开：回到散开</span>
-            <span class="kbd">三指抓：切换视频/成语</span>
-          </div>
-        </div>
-        <div class="videoWrap">
-          <video id="horseVid" playsinline muted loop></video>
-          <div class="videoGlow"></div>
-        </div>
-        <div class="idiomLine">
-          <div class="idiomText" id="focusIdiom">马到成功</div>
-          <div class="idiomSub" id="focusSub">提示：若视频未显示，请将 mp4 放到 assets/videos/ 并更新列表。</div>
-        </div>
+      <div class="tips" id="tips" style="display:none;">
+        <span class="chip"><b>握拳</b> → 合拢成语（随机换一条）</span>
+        <span class="chip"><b>张开五指</b> → 散开漂浮</span>
+        <span class="chip"><b>掌心移动/旋转</b> → 散开状态下旋转视角</span>
+        <span class="chip"><b>三指抓</b> → 抓红包开封 → 播放马视频 + 成语</span>
+        <span class="chip"><b>鼠标双击</b> → 备用抓红包</span>
       </div>
     </div>
-
-    <video id="cam" playsinline></video>
   </div>
 
-  <script type="module-shim">
-    import * as THREE from "three";
-    import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-    import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-    import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-    import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-    import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
+  <div id="focusOverlay" class="focusOverlay">
+    <div class="focusCard">
+      <h3 id="focusTitle">红包开封</h3>
+      <p id="focusText">正在为你抽取马年祝福…</p>
+      <div class="small">
+        <span class="kbd">再次三指抓：换一个红包</span>
+        <span class="kbd">握拳：回到合拢成语</span>
+        <span class="kbd">张开手：回到散开漂浮</span>
+      </div>
+    </div>
+  </div>
 
-    // ---------------------------
-    // 基础工具
-    // ---------------------------
-    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const lerp = (a, b, t) => a + (b - a) * t;
-    const damp = (current, target, lambda, dt) => {
-      const t = 1 - Math.exp(-lambda * dt);
-      return current + (target - current) * t;
-    };
+  <video id="cam" playsinline></video>
+  <audio id="bgm" preload="none" loop playsinline></audio>
+</div>
 
-    const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const DPR_CAP = IS_MOBILE ? 1.35 : 2.0;
+<script type="module-shim">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 
-    const COLORS = {
-      gold: new THREE.Color("#d4af37"),
-      gold2: new THREE.Color("#ffdc7a"),
-      red: new THREE.Color("#b11226"),
-      red2: new THREE.Color("#ff2b4a"),
-      bg0: new THREE.Color("#040307"),
-      bg1: new THREE.Color("#16050a"),
-      white: new THREE.Color("#ffffff")
-    };
+/* ---------------------------
+   Constants / UI
+--------------------------- */
+const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const DPR_CAP = IS_MOBILE ? 1.2 : 2.0;
 
-    const canvas = document.getElementById("gl");
-    const statusText = document.getElementById("statusText");
-    const modeBadge = document.getElementById("modeBadge");
-    const led = document.getElementById("led");
-    const btnStart = document.getElementById("btnStart");
-    const btnIdiom = document.getElementById("btnIdiom");
-    const btnReset = document.getElementById("btnReset");
-    const btnHelp = document.getElementById("btnHelp");
-    const btnFS = document.getElementById("btnFS");
-    const tips = document.getElementById("tips");
-    const toastEl = document.getElementById("toast");
+const COLORS = {
+  gold: new THREE.Color("#d4af37"),
+  gold2: new THREE.Color("#f5d77a"),
+  red:  new THREE.Color("#b11226"),
+  red2: new THREE.Color("#ff2a4f"),
+  ink:  new THREE.Color("#050607"),
+  bg0:  new THREE.Color("#040406")
+};
 
-    const focusOverlay = document.getElementById("focusOverlay");
-    const focusIdiomEl = document.getElementById("focusIdiom");
-    const focusSubEl = document.getElementById("focusSub");
-    const horseVid = document.getElementById("horseVid");
-    const camVideo = document.getElementById("cam");
+const IDIOMS = [
+  "马到成功","龙马精神","一马当先","万马奔腾","马上发财","马上如意",
+  "策马扬鞭","快马加鞭","一马平川","天马行空","马到功成","马跃钱程",
+  "人强马壮","金戈铁马","骏马奔腾","马蹄生风",
+  "马年大吉","马年行大运","马年祥瑞","金马迎春","宝马香车","马首是瞻",
+  "马到财来","马到福来","马到运来",
+  "马上有钱","马上有房","马上有对象","马力全开"
+];
 
-    function toast(msg, ms = 1600){
-      toastEl.textContent = msg;
-      toastEl.classList.add("show");
-      clearTimeout(toastEl._t);
-      toastEl._t = setTimeout(() => toastEl.classList.remove("show"), ms);
+const VIDEO_LIST = [
+  "assets/videos/horse1.mp4",
+  "assets/videos/horse2.mp4",
+  "assets/videos/horse3.mp4"
+];
+
+const BGM_URL = "assets/music/newyear.mp3";
+
+const canvas = document.getElementById("gl");
+const statusText = document.getElementById("statusText");
+const led = document.getElementById("led");
+const btnStart = document.getElementById("btnStart");
+const btnReset = document.getElementById("btnReset");
+const btnHelp = document.getElementById("btnHelp");
+const tips = document.getElementById("tips");
+const btnMusic = document.getElementById("btnMusic");
+const bgm = document.getElementById("bgm");
+const focusOverlay = document.getElementById("focusOverlay");
+const focusTitleEl = document.getElementById("focusTitle");
+const focusTextEl = document.getElementById("focusText");
+const camVideoEl = document.getElementById("cam");
+
+/* ---------------------------
+   Helpers
+--------------------------- */
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp = (a,b,t)=>a+(b-a)*t;
+const damp = (current,target,lambda,dt)=>{
+  const t = 1 - Math.exp(-lambda*dt);
+  return current + (target-current)*t;
+};
+function randPick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function makeMaSpriteTexture({
+  size=256,
+  text="马",
+  fill="#f5d77a",
+  stroke="#b11226",
+  glow="#d4af37",
+  fontWeight=900
+}={}){
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d");
+
+  // soft glow background
+  const g = ctx.createRadialGradient(size/2,size/2,0,size/2,size/2,size*0.48);
+  g.addColorStop(0, "rgba(212,175,55,0.22)");
+  g.addColorStop(1, "rgba(212,175,55,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,size,size);
+
+  // draw glyph
+  ctx.save();
+  ctx.translate(size/2,size/2);
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+
+  const fontPx = Math.floor(size*0.70);
+  ctx.font = `${fontWeight} ${fontPx}px "PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui`;
+  ctx.lineJoin="round";
+
+  // thick outer glow
+  ctx.shadowColor = glow;
+  ctx.shadowBlur = Math.floor(size*0.12);
+  ctx.strokeStyle = "rgba(212,175,55,0.55)";
+  ctx.lineWidth = Math.floor(size*0.07);
+  ctx.strokeText(text, 0, Math.floor(size*0.02));
+
+  // red stroke to increase edge definition
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = Math.floor(size*0.055);
+  ctx.strokeText(text, 0, Math.floor(size*0.02));
+
+  // gold fill
+  const fg = ctx.createLinearGradient(0,-size/2,0,size/2);
+  fg.addColorStop(0, fill);
+  fg.addColorStop(1, "#d4af37");
+  ctx.fillStyle = fg;
+  ctx.fillText(text, 0, Math.floor(size*0.02));
+
+  // small glitter
+  for(let i=0;i<18;i++){
+    const x = (Math.random()-0.5)*size*0.70;
+    const y = (Math.random()-0.5)*size*0.70;
+    const r = 1.2 + Math.random()*2.2;
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(255,255,255,${0.15+Math.random()*0.35})`;
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+
+function sampleTextPoints(text, {
+  fontSize=220,
+  step=3,
+  threshold=16,
+  worldWidth=7.2,
+  fontWeight=900,
+  paddingRatio=0.45
+}={}){
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio||1));
+  const c = document.createElement("canvas");
+  const ctx = c.getContext("2d", { willReadFrequently:true });
+
+  const font = `${fontWeight} ${fontSize}px "PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui`;
+  ctx.font = font;
+  const m = ctx.measureText(text);
+  const pad = Math.ceil(fontSize*paddingRatio);
+
+  const cssW = Math.ceil(m.width + pad*2);
+  const cssH = Math.ceil(fontSize*1.3 + pad*2);
+
+  c.width  = Math.ceil(cssW*dpr);
+  c.height = Math.ceil(cssH*dpr);
+
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  // Slightly thicker white to get clearer edges
+  ctx.font = font;
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillStyle="#ffffff";
+  ctx.fillText(text, cssW/2, cssH/2);
+
+  // optional: stroke to widen sampling edges (improves outline)
+  ctx.lineJoin="round";
+  ctx.strokeStyle="rgba(255,255,255,0.85)";
+  ctx.lineWidth = Math.max(2, Math.floor(fontSize*0.03));
+  ctx.strokeText(text, cssW/2, cssH/2);
+
+  const img = ctx.getImageData(0,0,c.width,c.height).data;
+
+  const pts = [];
+  const stepPx = Math.max(1, Math.round(step*dpr));
+  for(let y=0;y<c.height;y+=stepPx){
+    for(let x=0;x<c.width;x+=stepPx){
+      const a = img[(y*c.width+x)*4+3];
+      if(a>threshold) pts.push([x/dpr, y/dpr]);
     }
+  }
 
-    // ---------------------------
-    // 成语列表（去重后使用）
-    // ---------------------------
-    const IDIOMS = [
-      "马到成功","龙马精神","一马当先","万马奔腾","马上发财","马上如意",
-      "策马扬鞭","快马加鞭","一马平川","天马行空","马到功成","马跃钱程",
-      "人强马壮","金戈铁马","骏马奔腾","马蹄生风",
-      "马年大吉","马年行大运","马年祥瑞","金马迎春","宝马香车","马首是瞻",
-      "马到财来","马到福来","马到运来",
-      "马上有钱","马上有房","马上有对象","马力全开"
-    ];
+  const scale = worldWidth / cssW;
+  const out = new Float32Array(pts.length*3);
+  for(let i=0;i<pts.length;i++){
+    const [xCss,yCss]=pts[i];
+    const px = (xCss - cssW/2)*scale;
+    const py = (cssH/2 - yCss)*scale;
+    out[i*3+0]=px;
+    out[i*3+1]=py;
+    out[i*3+2]=0;
+  }
 
-    function pickRandomIdiom(except = ""){
-      if (IDIOMS.length === 0) return "马到成功";
-      let s = "";
-      for (let i = 0; i < 6; i++){
-        s = IDIOMS[Math.floor(Math.random() * IDIOMS.length)];
-        if (s && s !== except) break;
+  return { positions: out, count: pts.length, cssW, cssH };
+}
+
+function makeGoldStampTexture(){
+  const c=document.createElement("canvas");
+  c.width=256; c.height=256;
+  const ctx=c.getContext("2d");
+
+  const bg=ctx.createRadialGradient(128,128,0,128,128,120);
+  bg.addColorStop(0,"rgba(212,175,55,.45)");
+  bg.addColorStop(1,"rgba(212,175,55,0)");
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,256,256);
+
+  // stamp ring
+  ctx.beginPath();
+  ctx.arc(128,128,64,0,Math.PI*2);
+  ctx.strokeStyle="rgba(245,215,122,.85)";
+  ctx.lineWidth=10;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(128,128,48,0,Math.PI*2);
+  ctx.strokeStyle="rgba(212,175,55,.8)";
+  ctx.lineWidth=6;
+  ctx.stroke();
+
+  // center glyph "福"
+  ctx.save();
+  ctx.translate(128,128);
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.font=`900 86px "PingFang SC","Microsoft YaHei",ui-sans-serif`;
+  ctx.fillStyle="rgba(245,215,122,.95)";
+  ctx.shadowColor="rgba(212,175,55,.55)";
+  ctx.shadowBlur=14;
+  ctx.fillText("福",0,6);
+  ctx.restore();
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+
+/* ---------------------------
+   Three.js Setup
+--------------------------- */
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias:true,
+  alpha:false,
+  powerPreference:"high-performance"
+});
+renderer.setPixelRatio(Math.min(DPR_CAP, window.devicePixelRatio||1));
+renderer.setSize(window.innerWidth, window.innerHeight, false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.06;
+
+const scene = new THREE.Scene();
+scene.background = COLORS.bg0;
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 160);
+// 把相机稍微拉远：更容易看到四字全貌
+camera.position.set(0, 2.25, 10.6);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.20));
+const key = new THREE.DirectionalLight(0xfff2d6, 1.00);
+key.position.set(6, 8, 6);
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xd4af37, 0.55);
+rim.position.set(-6, 4, -6);
+scene.add(rim);
+
+const goldPoint = new THREE.PointLight(0xd4af37, 1.10, 24, 2);
+goldPoint.position.set(0, 4.5, 2.2);
+scene.add(goldPoint);
+
+const redPoint = new THREE.PointLight(0xb11226, 0.75, 18, 2);
+redPoint.position.set(-2.4, 3.0, 2.2);
+scene.add(redPoint);
+
+/* ---------------------------
+   Postprocessing (Selective Bloom)
+--------------------------- */
+const BLOOM_LAYER = 1;
+
+const bloomComposer = new EffectComposer(renderer);
+bloomComposer.addPass(new RenderPass(scene, camera));
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  1.18, 0.62, 0.16
+);
+bloomComposer.addPass(bloomPass);
+
+const finalComposer = new EffectComposer(renderer);
+finalComposer.addPass(new RenderPass(scene, camera));
+const bloomMixPass = new ShaderPass(
+  new THREE.ShaderMaterial({
+    uniforms:{
+      baseTexture:{ value:null },
+      bloomTexture:{ value:bloomComposer.renderTarget2.texture },
+      uBloomIntensity:{ value: 1.0 }
+    },
+    vertexShader:`
+      varying vec2 vUv;
+      void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }
+    `,
+    fragmentShader:`
+      uniform sampler2D baseTexture;
+      uniform sampler2D bloomTexture;
+      uniform float uBloomIntensity;
+      varying vec2 vUv;
+      void main(){
+        vec4 base = texture2D(baseTexture, vUv);
+        vec4 bloom = texture2D(bloomTexture, vUv);
+        gl_FragColor = base + bloom*uBloomIntensity;
       }
-      return s || "马到成功";
+    `
+  }),
+  "baseTexture"
+);
+finalComposer.addPass(bloomMixPass);
+finalComposer.addPass(new OutputPass());
+
+/* ---------------------------
+   Modes
+--------------------------- */
+const Mode = {
+  COHESION: "COHESION",   // 合拢成语
+  SCATTER:  "SCATTER",    // 散开漂浮
+  REVEAL:   "REVEAL"      // 抓红包开封 + 视频
+};
+let mode = Mode.COHESION;
+
+let mix = 0;       // 0=合拢，1=散开
+let targetMix = 0;
+
+let reveal = 0;    // 0=未进入开封，1=已进入开封/视频
+let targetReveal = 0;
+
+function setMode(next){
+  if(mode===next) return;
+  mode = next;
+
+  if(mode===Mode.COHESION){
+    targetMix = 0;
+    targetReveal = 0;
+    focusOverlay.classList.remove("show");
+    // 每次回到合拢：换一个随机成语
+    pickNewIdiom(true);
+    statusText.textContent = "合拢成语：握拳可随机换一条；张开手可散开漂浮。";
+  }else if(mode===Mode.SCATTER){
+    targetMix = 1;
+    targetReveal = 0;
+    focusOverlay.classList.remove("show");
+    statusText.textContent = "散开漂浮：掌心移动/旋转可旋转视角；三指抓可抓红包。";
+  }else if(mode===Mode.REVEAL){
+    targetMix = 1;
+    targetReveal = 1;
+    focusOverlay.classList.add("show");
+    statusText.textContent = "抓到红包：开封后播放马视频，并显示随机马年成语。";
+  }
+}
+
+/* ---------------------------
+   Idiom Particles (马字精灵粒子)
+--------------------------- */
+const idiomGroup = new THREE.Group();
+scene.add(idiomGroup);
+
+// 整体往后放一点（“距离摄像机太近”的问题）
+idiomGroup.position.set(0, 2.35, -2.2);
+
+const MA_SPRITE = makeMaSpriteTexture();
+const IDIOM_PARTICLE_COUNT = IS_MOBILE ? 9000 : 14000;
+
+// build geometry with aHome from sampled idiom points, and aScatter random sphere
+let idiomCurrent = "";
+let idiomHomePositions = null;
+let idiomHomeCount = 0;
+
+function buildIdiomTargets(text){
+  const sample = sampleTextPoints(text, {
+    fontSize: IS_MOBILE ? 190 : 230,
+    step: IS_MOBILE ? 4 : 3,          // 更密一点：边缘更清晰
+    threshold: 10,
+    worldWidth: IS_MOBILE ? 7.0 : 8.4 // 字整体更大一些，但放远了，所以不压脸
+  });
+  idiomHomePositions = sample.positions;
+  idiomHomeCount = sample.count;
+}
+
+const idiomGeo = new THREE.BufferGeometry();
+const aHome = new Float32Array(IDIOM_PARTICLE_COUNT*3);
+const aScatter = new Float32Array(IDIOM_PARTICLE_COUNT*3);
+const aRand = new Float32Array(IDIOM_PARTICLE_COUNT);
+const aHue = new Float32Array(IDIOM_PARTICLE_COUNT);
+
+function sampleScatterSphere(){
+  const R = 6.8;
+  const u=Math.random(), v=Math.random();
+  const theta=u*Math.PI*2;
+  const phi=Math.acos(2*v-1);
+  const rr=(0.48 + Math.pow(Math.random(),0.70)*0.52)*R;
+  const x=rr*Math.sin(phi)*Math.cos(theta);
+  const y=rr*Math.cos(phi)*0.78 + 2.2;
+  const z=rr*Math.sin(phi)*Math.sin(theta);
+  return new THREE.Vector3(x,y,z);
+}
+
+function applyIdiomTargetsToAttributes(){
+  if(!idiomHomePositions) return;
+  for(let i=0;i<IDIOM_PARTICLE_COUNT;i++){
+    const j = (i % idiomHomeCount);
+    aHome[i*3+0] = idiomHomePositions[j*3+0];
+    aHome[i*3+1] = idiomHomePositions[j*3+1];
+    aHome[i*3+2] = idiomHomePositions[j*3+2];
+
+    const s = sampleScatterSphere();
+    aScatter[i*3+0]=s.x;
+    aScatter[i*3+1]=s.y;
+    aScatter[i*3+2]=s.z;
+
+    aRand[i]=Math.random();
+    aHue[i]=Math.random(); // 给少量彩点（更喜庆但不喧宾夺主）
+  }
+  idiomGeo.setAttribute("aHome", new THREE.BufferAttribute(aHome,3));
+  idiomGeo.setAttribute("aScatter", new THREE.BufferAttribute(aScatter,3));
+  idiomGeo.setAttribute("aRand", new THREE.BufferAttribute(aRand,1));
+  idiomGeo.setAttribute("aHue", new THREE.BufferAttribute(aHue,1));
+  // 给一个 position 防止 frustum/bounds 异常
+  idiomGeo.setAttribute("position", new THREE.BufferAttribute(aHome,3));
+  idiomGeo.computeBoundingSphere();
+}
+
+const idiomMat = new THREE.ShaderMaterial({
+  transparent:true,
+  depthWrite:false,
+  blending:THREE.AdditiveBlending,
+  uniforms:{
+    uTime:{ value:0 },
+    uMix:{ value:0 },
+    uSprite:{ value: MA_SPRITE },
+    uBaseSize:{ value: IS_MOBILE ? 0.78 : 0.72 },  // 粒子更小（你的要求）
+    uColorGold:{ value: new THREE.Color("#d4af37") },
+    uColorRed:{ value: new THREE.Color("#b11226") },
+    uColorGold2:{ value: new THREE.Color("#f5d77a") },
+    uFocus:{ value: 0 }
+  },
+  vertexShader:`
+    uniform float uTime;
+    uniform float uMix;
+    uniform float uBaseSize;
+    uniform float uFocus;
+
+    attribute vec3 aHome;
+    attribute vec3 aScatter;
+    attribute float aRand;
+    attribute float aHue;
+
+    varying float vRand;
+    varying float vHue;
+    varying float vTw;
+
+    void main(){
+      vRand = aRand;
+      vHue = aHue;
+
+      vec3 pos = mix(aHome, aScatter, uMix);
+
+      // 更轻的漂浮，避免边缘模糊
+      float t = uTime * (0.55 + aRand*1.1);
+      float wob = (0.05 + 0.10*uMix);
+      pos.x += sin(t + aRand*6.2831) * wob;
+      pos.y += cos(t*0.9 + aRand*5.0) * wob * 0.75;
+      pos.z += sin(t*0.8 + aRand*4.0) * wob;
+
+      // REVEAL 时略微“远景扩散”，让红包/烟花更突出
+      pos *= (1.0 + uFocus * 0.08);
+
+      vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+      gl_Position = projectionMatrix * mv;
+
+      float dist = max(0.001, -mv.z);
+
+      // 粒子小 + 更稳定（不靠得太近时也不会炸大）
+      float tw = 0.78 + 0.22*sin(uTime*2.0 + aRand*10.0);
+      gl_PointSize = clamp(uBaseSize * tw * (110.0/dist), 0.7, 2.2);
+
+      vTw = tw;
+    }
+  `,
+  fragmentShader:`
+    precision highp float;
+    uniform sampler2D uSprite;
+    uniform vec3 uColorGold;
+    uniform vec3 uColorGold2;
+    uniform vec3 uColorRed;
+    uniform float uFocus;
+
+    varying float vRand;
+    varying float vHue;
+    varying float vTw;
+
+    // simple HSV-ish tint for occasional colorful sparkles
+    vec3 hueToRgb(float h){
+      float r = abs(h*6.0 - 3.0) - 1.0;
+      float g = 2.0 - abs(h*6.0 - 2.0);
+      float b = 2.0 - abs(h*6.0 - 4.0);
+      return clamp(vec3(r,g,b), 0.0, 1.0);
     }
 
-    // ---------------------------
-    // 视频列表（请将文件放到 GitHub Pages 同仓库 assets/videos/）
-    // ---------------------------
-    const HORSE_VIDEOS = [
-      "assets/videos/horse1.mp4",
-      "assets/videos/horse2.mp4",
-      "assets/videos/horse3.mp4"
-    ];
+    void main(){
+      vec2 uv = gl_PointCoord;
+      vec4 s = texture2D(uSprite, uv);
 
-    async function playRandomVideo(){
-      const url = HORSE_VIDEOS[Math.floor(Math.random() * HORSE_VIDEOS.length)] || "";
-      if (!url) return;
+      // alpha from sprite (already has outline)
+      float a = s.a;
+      if(a < 0.05) discard;
 
-      try {
-        horseVid.pause();
-        horseVid.src = url;
-        horseVid.load();
-        await horseVid.play();
-        focusSubEl.textContent = "提示：三指抓可切换视频与成语；握拳/张开可退出。";
-      } catch (e) {
-        focusSubEl.textContent = "视频未能自动播放：请确保 assets/videos/ 下存在 mp4（GitHub Pages 同源），并允许浏览器播放。";
-      }
+      // base gold/red palette (more festive than white)
+      float m1 = smoothstep(0.10, 0.92, vRand);
+      vec3 col = mix(uColorGold2, uColorGold, m1);
+      col = mix(col, uColorRed, smoothstep(0.82, 0.98, vRand)*0.55);
+
+      // occasional colorful points when in REVEAL (firework vibe complement)
+      float colorful = smoothstep(0.55, 1.0, uFocus) * smoothstep(0.975, 1.0, vRand);
+      vec3 c2 = hueToRgb(vHue);
+      col = mix(col, c2, colorful);
+
+      // gentle glow gain
+      float glow = (0.75 + 0.55*vTw) * (1.0 + 0.20*uFocus);
+      gl_FragColor = vec4(col * (1.10 + 0.60*(1.0-a)), a * glow);
     }
+  `
+});
 
-    // ---------------------------
-    // 生成“马”字粒子纹理（点精灵）
-    // ---------------------------
-    function makeMaGlyphTexture({
-      size = 128,
-      glyph = "马"
-    } = {}){
-      const c = document.createElement("canvas");
-      c.width = size;
-      c.height = size;
-      const ctx = c.getContext("2d");
+const idiomPoints = new THREE.Points(idiomGeo, idiomMat);
+idiomGroup.add(idiomPoints);
+idiomPoints.layers.enable(BLOOM_LAYER);
 
-      ctx.clearRect(0,0,size,size);
+function pickNewIdiom(forceRebuild=false){
+  const next = randPick(IDIOMS);
+  if(next===idiomCurrent && !forceRebuild) return;
+  idiomCurrent = next;
 
-      // 金红辉光底
-      const g0 = ctx.createRadialGradient(size*0.50, size*0.52, 0, size*0.50, size*0.52, size*0.48);
-      g0.addColorStop(0, "rgba(255,220,122,0.45)");
-      g0.addColorStop(0.45, "rgba(212,175,55,0.22)");
-      g0.addColorStop(0.85, "rgba(177,18,38,0.08)");
-      g0.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = g0;
-      ctx.fillRect(0,0,size,size);
+  buildIdiomTargets(idiomCurrent);
+  applyIdiomTargetsToAttributes();
+}
 
-      // 字形
-      ctx.save();
-      ctx.translate(size/2, size/2);
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
+pickNewIdiom(true);
 
-      const font = `900 ${Math.round(size*0.62)}px "PingFang SC","Microsoft YaHei",ui-sans-serif`;
-      ctx.font = font;
+/* ---------------------------
+   Red Envelopes (红包 Instanced)
+--------------------------- */
+const envelopeGroup = new THREE.Group();
+scene.add(envelopeGroup);
 
-      // 外描边（更“金属”）
-      ctx.lineWidth = Math.max(6, Math.round(size*0.08));
-      ctx.strokeStyle = "rgba(255,220,122,0.90)";
-      ctx.strokeText(glyph, 0, 2);
+const STAMP_TEX = makeGoldStampTexture();
 
-      // 内填充（偏金白）
-      const g1 = ctx.createLinearGradient(0, -size/2, 0, size/2);
-      g1.addColorStop(0, "rgba(255,245,220,0.98)");
-      g1.addColorStop(0.45, "rgba(255,220,122,0.98)");
-      g1.addColorStop(1, "rgba(212,175,55,0.95)");
-      ctx.fillStyle = g1;
-      ctx.fillText(glyph, 0, 2);
+function makeEnvelopeMaterial(){
+  // base red + subtle metallic highlight
+  return new THREE.MeshStandardMaterial({
+    color: COLORS.red,
+    metalness: 0.35,
+    roughness: 0.55,
+    emissive: COLORS.red.clone().multiplyScalar(0.18),
+    emissiveIntensity: 0.9
+  });
+}
+function makeStampMaterial(){
+  return new THREE.MeshBasicMaterial({
+    map: STAMP_TEX,
+    transparent:true,
+    opacity: 0.92,
+    toneMapped:false
+  });
+}
 
-      // 微红高光
-      ctx.globalCompositeOperation = "screen";
-      ctx.shadowColor = "rgba(255,43,74,0.35)";
-      ctx.shadowBlur = Math.round(size*0.18);
-      ctx.fillStyle = "rgba(255,43,74,0.10)";
-      ctx.fillText(glyph, 0, 2);
+const ENVELOPE_COUNT = IS_MOBILE ? 180 : 320;
+const envGeo = new THREE.PlaneGeometry(0.26, 0.36);
+const envMat = makeEnvelopeMaterial();
+const envelopes = new THREE.InstancedMesh(envGeo, envMat, ENVELOPE_COUNT);
+envelopes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+envelopeGroup.add(envelopes);
 
-      ctx.restore();
+// a separate instanced stamp (front)
+const stampGeo = new THREE.PlaneGeometry(0.14, 0.14);
+const stampMat = makeStampMaterial();
+const stamps = new THREE.InstancedMesh(stampGeo, stampMat, ENVELOPE_COUNT);
+stamps.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+envelopeGroup.add(stamps);
+stamps.layers.enable(BLOOM_LAYER);
 
-      // 轻微柔化
-      ctx.globalCompositeOperation = "source-over";
-      const g2 = ctx.createRadialGradient(size*0.50, size*0.52, 0, size*0.50, size*0.52, size*0.55);
-      g2.addColorStop(0, "rgba(255,255,255,0.08)");
-      g2.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = g2;
-      ctx.fillRect(0,0,size,size);
+const envScatter = new Array(ENVELOPE_COUNT);
+const envSeed = new Array(ENVELOPE_COUNT);
+for(let i=0;i<ENVELOPE_COUNT;i++){
+  envScatter[i] = sampleScatterSphere();
+  envSeed[i] = Math.random()*1000;
+}
 
-      const tex = new THREE.CanvasTexture(c);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.generateMipmaps = false;
-      tex.minFilter = THREE.LinearFilter;
-      tex.magFilter = THREE.LinearFilter;
-      return tex;
-    }
+const _obj = new THREE.Object3D();
+function updateEnvelopes(time, mix, focus, dt){
+  // in COHESION: envelopes exist but faint and further, so idiom dominates
+  const baseOpacity = lerp(0.35, 0.95, mix);
+  envMat.opacity = baseOpacity;
+  envMat.transparent = true;
 
-    // ---------------------------
-    // 用 Canvas 采样成语形状点（“合拢态”目标）
-    // ---------------------------
-    function sampleTextPoints(text, {
-      fontSize = 220,
-      step = 3,
-      padding = 60,
-      threshold = 10,
-      worldWidth = 7.2
-    } = {}){
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      const c = document.createElement("canvas");
-      const ctx = c.getContext("2d", { willReadFrequently: true });
+  for(let i=0;i<ENVELOPE_COUNT;i++){
+    const s = envScatter[i];
+    const t = time*(0.6 + (envSeed[i]%1.0)*1.2);
 
-      const font = `900 ${fontSize}px "PingFang SC","Microsoft YaHei",ui-sans-serif`;
-      ctx.font = font;
-      const metrics = ctx.measureText(text);
+    // idle drift
+    let x = s.x + Math.sin(t + envSeed[i])*0.12;
+    let y = s.y + Math.cos(t*0.9 + envSeed[i])*0.10;
+    let z = s.z + Math.sin(t*0.8 + envSeed[i])*0.12;
 
-      const cssW = Math.ceil(metrics.width + padding * 2);
-      const cssH = Math.ceil(fontSize * 1.25 + padding * 2);
+    // reveal focus: spread slightly
+    const k = 1.0 + focus*0.08;
+    x*=k; y*=k; z*=k;
 
-      c.width = Math.ceil(cssW * dpr);
-      c.height = Math.ceil(cssH * dpr);
+    _obj.position.set(x,y,z);
+    _obj.lookAt(camera.position);
 
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, cssW, cssH);
+    // subtle wobble rotation
+    _obj.rotateZ(Math.sin(t*0.7)*0.10);
+    _obj.rotateX(Math.cos(t*0.5)*0.06);
 
-      // 金红渐变文字（采样 alpha 即可）
-      const fillG = ctx.createLinearGradient(0, 0, cssW, cssH);
-      fillG.addColorStop(0, "#ffffff");
-      fillG.addColorStop(0.45, "#ffffff");
-      fillG.addColorStop(1, "#ffffff");
-      ctx.fillStyle = fillG;
+    const sc = 0.85 + (i%5)*0.03;
+    _obj.scale.set(sc, sc, 1);
+    _obj.updateMatrix();
+    envelopes.setMatrixAt(i, _obj.matrix);
 
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.font = font;
+    // stamp (slightly in front)
+    _obj.position.set(x,y,z+0.002);
+    _obj.scale.set(sc*0.92, sc*0.92, 1);
+    _obj.updateMatrix();
+    stamps.setMatrixAt(i, _obj.matrix);
+  }
+  envelopes.instanceMatrix.needsUpdate = true;
+  stamps.instanceMatrix.needsUpdate = true;
+}
 
-      ctx.fillText(text, cssW/2, cssH/2);
+/* ---------------------------
+   Grab Envelope: single animated envelope with "open" flap
+--------------------------- */
+const grabGroup = new THREE.Group();
+scene.add(grabGroup);
+grabGroup.visible = false;
 
-      const img = ctx.getImageData(0, 0, c.width, c.height).data;
-      const stepPx = Math.max(1, Math.round(step * dpr));
+// main body
+const grabBody = new THREE.Mesh(new THREE.PlaneGeometry(0.60, 0.84), makeEnvelopeMaterial());
+grabBody.material.emissive = COLORS.red.clone().multiplyScalar(0.22);
+grabBody.material.emissiveIntensity = 1.0;
+grabGroup.add(grabBody);
+grabBody.layers.enable(BLOOM_LAYER);
 
-      const pts = [];
-      for (let y = 0; y < c.height; y += stepPx) {
-        for (let x = 0; x < c.width; x += stepPx) {
-          const a = img[(y * c.width + x) * 4 + 3];
-          if (a > threshold) pts.push([x / dpr, y / dpr]);
-        }
-      }
+// stamp
+const grabStamp = new THREE.Mesh(new THREE.PlaneGeometry(0.30, 0.30), makeStampMaterial());
+grabStamp.position.z = 0.004;
+grabGroup.add(grabStamp);
+grabStamp.layers.enable(BLOOM_LAYER);
 
-      // 映射到世界坐标：按宽度缩放，居中
-      const scale = worldWidth / cssW;
-      const out = new Array(pts.length);
-      for (let i = 0; i < pts.length; i++){
-        const [xCss, yCss] = pts[i];
-        const px = (xCss - cssW/2) * scale;
-        const py = (cssH/2 - yCss) * scale;
-        out[i] = new THREE.Vector3(px, py, 0);
-      }
-      return out;
-    }
+// flap (top cover)
+const flapGeo = new THREE.PlaneGeometry(0.62, 0.46);
+const flapMat = makeEnvelopeMaterial();
+flapMat.emissive = COLORS.red.clone().multiplyScalar(0.20);
+flapMat.emissiveIntensity = 0.95;
+const grabFlap = new THREE.Mesh(flapGeo, flapMat);
+grabFlap.position.set(0, 0.21, 0.006);
+grabGroup.add(grabFlap);
 
-    // ---------------------------
-    // Three.js 初始化
-    // ---------------------------
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: false,
-      powerPreference: "high-performance"
-    });
-    renderer.setPixelRatio(Math.min(DPR_CAP, window.devicePixelRatio || 1));
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
+// hinge at top edge
+grabFlap.geometry.translate(0, -0.23, 0);
+grabFlap.position.y = 0.44;
 
-    const scene = new THREE.Scene();
-    scene.background = COLORS.bg0;
+// video plane (Three.js VideoTexture)
+const videoGroup = new THREE.Group();
+scene.add(videoGroup);
+videoGroup.visible = false;
 
-    const fog = new THREE.FogExp2(0x040307, 0.085);
-    scene.fog = fog;
+const videoEl = document.createElement("video");
+videoEl.playsInline = true;
+videoEl.muted = true;       // 绝大多数浏览器允许 muted 自动播放
+videoEl.loop = true;
+videoEl.preload = "auto";
+videoEl.crossOrigin = "anonymous";
 
-    const camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 120);
-    camera.position.set(0, 2.0, 8.8);
+const videoTex = new THREE.VideoTexture(videoEl);
+videoTex.colorSpace = THREE.SRGBColorSpace;
+videoTex.minFilter = THREE.LinearFilter;
+videoTex.magFilter = THREE.LinearFilter;
+videoTex.generateMipmaps = false;
 
-    // 灯光：金红电影感
-    scene.add(new THREE.AmbientLight(0xffffff, 0.18));
+const videoMat = new THREE.MeshBasicMaterial({ map: videoTex, toneMapped:false });
+const videoPlane = new THREE.Mesh(new THREE.PlaneGeometry(2.55, 1.55), videoMat);
+videoGroup.add(videoPlane);
+videoPlane.layers.enable(BLOOM_LAYER);
 
-    const keyLight = new THREE.DirectionalLight(0xfff2d6, 1.05);
-    keyLight.position.set(6, 8, 5);
-    scene.add(keyLight);
+// subtle frame glow
+const frameMat = new THREE.MeshStandardMaterial({
+  color: COLORS.gold,
+  metalness: 1.0,
+  roughness: 0.30,
+  emissive: COLORS.gold.clone().multiplyScalar(0.14),
+  emissiveIntensity: 0.35,
+  transparent:true,
+  opacity: 0.85
+});
+const frame = new THREE.Mesh(new THREE.PlaneGeometry(2.75, 1.75), frameMat);
+frame.position.z = -0.02;
+videoGroup.add(frame);
+frame.layers.enable(BLOOM_LAYER);
 
-    const rimGold = new THREE.DirectionalLight(0xd4af37, 0.55);
-    rimGold.position.set(-6, 4, -6);
-    scene.add(rimGold);
+// caption as sprite
+function makeCaptionTexture(text){
+  const c = document.createElement("canvas");
+  c.width = 1024; c.height = 256;
+  const ctx = c.getContext("2d");
 
-    const goldPoint = new THREE.PointLight(0xd4af37, 1.35, 20, 2);
-    goldPoint.position.set(0, 4.4, 2.6);
-    scene.add(goldPoint);
+  ctx.clearRect(0,0,c.width,c.height);
 
-    const redPoint = new THREE.PointLight(0xb11226, 0.95, 16, 2);
-    redPoint.position.set(-2.5, 3.0, 2.6);
-    scene.add(redPoint);
+  // backdrop gradient
+  const g = ctx.createLinearGradient(0,0,c.width,0);
+  g.addColorStop(0, "rgba(177,18,38,0.18)");
+  g.addColorStop(0.5, "rgba(0,0,0,0.36)");
+  g.addColorStop(1, "rgba(212,175,55,0.18)");
+  ctx.fillStyle = g;
+  roundRect(ctx, 40, 52, c.width-80, c.height-104, 42);
+  ctx.fill();
 
-    // ---------------------------
-    // 选择性 Bloom（辉光/光晕）
-    // ---------------------------
-    const BLOOM_LAYER = 1;
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "rgba(212,175,55,0.55)";
+  ctx.stroke();
 
-    const bloomComposer = new EffectComposer(renderer);
-    bloomComposer.addPass(new RenderPass(scene, camera));
-    const bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(window.innerWidth, window.innerHeight),
-      1.20, // strength
-      0.65, // radius
-      0.16  // threshold
-    );
-    bloomComposer.addPass(bloomPass);
+  ctx.font = `900 92px "PingFang SC","Microsoft YaHei",ui-sans-serif`;
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
 
-    const finalComposer = new EffectComposer(renderer);
-    finalComposer.addPass(new RenderPass(scene, camera));
-    const bloomMixPass = new ShaderPass(
-      new THREE.ShaderMaterial({
-        uniforms: {
-          baseTexture: { value: null },
-          bloomTexture: { value: bloomComposer.renderTarget2.texture },
-          uBloomIntensity: { value: 1.0 }
-        },
-        vertexShader: /* glsl */`
-          varying vec2 vUv;
-          void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-          }
-        `,
-        fragmentShader: /* glsl */`
-          uniform sampler2D baseTexture;
-          uniform sampler2D bloomTexture;
-          uniform float uBloomIntensity;
-          varying vec2 vUv;
-          void main() {
-            vec4 base = texture2D(baseTexture, vUv);
-            vec4 bloom = texture2D(bloomTexture, vUv);
-            gl_FragColor = base + bloom * uBloomIntensity;
-          }
-        `
-      }),
-      "baseTexture"
-    );
-    finalComposer.addPass(bloomMixPass);
-    finalComposer.addPass(new OutputPass());
+  // glow
+  ctx.shadowColor="rgba(212,175,55,.60)";
+  ctx.shadowBlur=18;
+  ctx.fillStyle="rgba(245,215,122,0.98)";
+  ctx.fillText(text, c.width/2, c.height/2 + 4);
 
-    // ---------------------------
-    // 粒子系统：“马”字点精灵
-    // ---------------------------
-    const group = new THREE.Group();
-    scene.add(group);
-    group.position.y = 2.35; // 让成语居中偏上，镜头更“电影”
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
+  return tex;
 
-    const PARTICLE_COUNT = IS_MOBILE ? 9000 : 14000;
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+}
 
-    const geo = new THREE.BufferGeometry();
-    const pos = new Float32Array(PARTICLE_COUNT * 3);
+let captionMesh = null;
+function setCaption(text){
+  const tex = makeCaptionTexture(text);
+  if(captionMesh){
+    captionMesh.material.map.dispose?.();
+    captionMesh.material.map = tex;
+    captionMesh.material.needsUpdate = true;
+    return;
+  }
+  const mat = new THREE.SpriteMaterial({
+    map: tex,
+    transparent:true,
+    opacity: 1.0,
+    depthWrite:false,
+    blending: THREE.AdditiveBlending,
+    toneMapped:false
+  });
+  captionMesh = new THREE.Sprite(mat);
+  captionMesh.scale.set(3.15, 0.78, 1);
+  captionMesh.position.set(0, -1.25, 0.02);
+  videoGroup.add(captionMesh);
+  captionMesh.layers.enable(BLOOM_LAYER);
+}
 
-    // 合拢态目标（随成语更新）
-    const aHome = new Float32Array(PARTICLE_COUNT * 3);
+// reveal flow state
+let revealPhase = 0; // 0 idle, 1 fly-in, 2 open, 3 show video
+let revealT = 0;
+let chosenIdiom = "";
+let chosenVideo = "";
 
-    // 散开态目标（固定）
-    const aScatter = new Float32Array(PARTICLE_COUNT * 3);
+async function playRandomVideo(){
+  chosenVideo = randPick(VIDEO_LIST);
+  try{
+    videoEl.pause();
+    videoEl.src = chosenVideo;
+    videoEl.load();
+    await videoEl.play();
+    return true;
+  }catch(e){
+    // fallback: show a placeholder by drawing on video plane via canvas
+    return false;
+  }
+}
 
-    // 随机与尺寸
-    const aRand = new Float32Array(PARTICLE_COUNT);
-    const aSize = new Float32Array(PARTICLE_COUNT);
+function beginReveal(){
+  // only allow from SCATTER or REVEAL (re-roll)
+  if(mode===Mode.COHESION) return;
 
-    function sampleScatterPos(){
-      const R = 6.2;
-      const u = Math.random();
-      const v = Math.random();
-      const theta = u * Math.PI * 2;
-      const phi = Math.acos(2 * v - 1);
-      const rr = (0.35 + Math.pow(Math.random(), 0.65) * 0.65) * R;
-      const x = rr * Math.sin(phi) * Math.cos(theta);
-      const y = rr * Math.cos(phi) * 0.70 + 0.2;
-      const z = rr * Math.sin(phi) * Math.sin(theta);
-      return new THREE.Vector3(x, y, z);
-    }
+  chosenIdiom = randPick(IDIOMS);
+  focusTitleEl.textContent = "红包开封";
+  focusTextEl.textContent = "正在为你抽取马年祝福…";
 
-    for (let i = 0; i < PARTICLE_COUNT; i++){
-      // 初始化 position 先填 scatter，避免空 bounding
-      const s = sampleScatterPos();
-      pos[i*3+0] = s.x; pos[i*3+1] = s.y; pos[i*3+2] = s.z;
+  setMode(Mode.REVEAL);
 
-      aScatter[i*3+0] = s.x;
-      aScatter[i*3+1] = s.y;
-      aScatter[i*3+2] = s.z;
+  // select a random envelope index
+  const pick = Math.floor(Math.random()*ENVELOPE_COUNT);
+  const p = envScatter[pick];
 
-      aRand[i] = Math.random();
-      aSize[i] = (IS_MOBILE ? 1.0 : 1.15) + Math.random() * (IS_MOBILE ? 1.8 : 2.2);
-    }
+  // place grabGroup at that envelope position first
+  grabGroup.position.copy(p);
+  grabGroup.quaternion.copy(camera.quaternion);
+  grabGroup.visible = true;
 
-    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    geo.setAttribute("aHome", new THREE.BufferAttribute(aHome, 3));
-    geo.setAttribute("aScatter", new THREE.BufferAttribute(aScatter, 3));
-    geo.setAttribute("aRand", new THREE.BufferAttribute(aRand, 1));
-    geo.setAttribute("aSize", new THREE.BufferAttribute(aSize, 1));
+  // reset animation
+  revealPhase = 1;
+  revealT = 0;
+  grabGroup.scale.setScalar(0.18); // start small (as picked in space)
+  grabFlap.rotation.x = 0;
+  videoGroup.visible = false;
 
-    const maTex = makeMaGlyphTexture({ size: 128, glyph: "马" });
+  // slight camera highlight
+  statusText.textContent = "抓到红包：正在放大…";
+}
 
-    const uniforms = {
-      uTime: { value: 0 },
-      uMix: { value: 0 },       // 0 合拢 -> 1 散开
-      uFocus: { value: 0 },     // 0 非视频 -> 1 视频（轻微景深/聚焦）
-      uOpacity: { value: 1.0 }
-    };
+async function switchToVideoStage(){
+  // ensure video loaded
+  const ok = await playRandomVideo();
 
-    const mat = new THREE.ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      uniforms,
-      vertexShader: /* glsl */`
+  // show caption and overlay text
+  setCaption(chosenIdiom);
+  focusTitleEl.textContent = "马年祝福";
+  focusTextEl.textContent = ok
+    ? `【${chosenIdiom}】\n祝你马年金光万丈，福运连连。`
+    : `【${chosenIdiom}】\n未找到视频文件：请将马视频放到 assets/videos/ 目录。`;
+
+  // position videoGroup in front of camera
+  videoGroup.visible = true;
+  const fwd = new THREE.Vector3();
+  camera.getWorldDirection(fwd);
+
+  const pos = camera.position.clone().addScaledVector(fwd, 6.2);
+  videoGroup.position.copy(pos);
+  videoGroup.quaternion.copy(camera.quaternion);
+
+  statusText.textContent = "开封完成：播放马视频（再次三指抓可换一个红包）。";
+}
+
+/* ---------------------------
+   Fireworks (彩色烟花粒子)
+--------------------------- */
+class Fireworks {
+  constructor(maxBursts=10){
+    this.maxBursts = maxBursts;
+    this.bursts = [];
+    this.group = new THREE.Group();
+    scene.add(this.group);
+
+    this.mat = new THREE.ShaderMaterial({
+      transparent:true,
+      depthWrite:false,
+      blending:THREE.AdditiveBlending,
+      uniforms:{ uTime:{ value:0 } },
+      vertexShader:`
         uniform float uTime;
-        uniform float uMix;
-        uniform float uFocus;
-        attribute vec3 aHome;
-        attribute vec3 aScatter;
-        attribute float aRand;
-        attribute float aSize;
-        varying float vRand;
-        varying float vHalo;
+        attribute vec3 position;
+        attribute vec3 aVel;
+        attribute vec3 aCol;
+        attribute float aSeed;
+        attribute float aLife;
+        varying vec3 vCol;
+        varying float vA;
 
         void main(){
-          vRand = aRand;
+          float t = uTime - aSeed;
+          float life = aLife;
+          float k = clamp(t / life, 0.0, 1.0);
 
-          float mixV = clamp(uMix, 0.0, 1.0);
-          vec3 pos = mix(aHome, aScatter, mixV);
+          vec3 p = position + aVel * (t*1.25) + vec3(0.0, -0.7, 0.0) * (t*t*0.30);
+          vCol = aCol;
 
-          // 漂浮：散开更明显；合拢更克制
-          float drift = 0.06 + 0.14 * mixV;
-          float t = uTime * (0.8 + aRand * 1.25);
-          pos.x += cos(t * 1.10 + aRand * 6.1) * drift * (0.50 + aRand);
-          pos.y += sin(t * 0.90 + aRand * 7.3) * drift * (0.45 + aRand * 0.9);
-          pos.z += sin(t * 0.95 + aRand * 5.7) * drift * (0.40 + aRand);
+          // fade
+          vA = (1.0 - k) * smoothstep(0.0, 0.12, k);
 
-          // 视频态：把粒子稍微“推开”一点，营造景深与舞台感
-          pos *= (1.0 + uFocus * (0.06 + aRand * 0.10));
-
-          vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+          vec4 mv = modelViewMatrix * vec4(p,1.0);
           gl_Position = projectionMatrix * mv;
 
           float dist = max(0.001, -mv.z);
-          float tw = 0.72 + 0.28 * sin(uTime * 2.2 + aRand * 12.0);
-          float size = aSize * tw * (260.0 / dist);
-
-          // 合拢时更“细密”；散开时更“星屑”
-          float capMin = 1.0;
-          float capMax = 9.0;
-          gl_PointSize = clamp(size, capMin, capMax);
-
-          // 用于片元辉光强度变化
-          vHalo = 0.55 + 0.45 * sin(uTime * 2.0 + aRand * 9.0);
+          gl_PointSize = clamp((2.0 + 6.0*(1.0-k)) * (180.0/dist), 1.0, 7.0);
         }
       `,
-      fragmentShader: /* glsl */`
+      fragmentShader:`
         precision highp float;
-        uniform sampler2D uMap;
-        uniform float uOpacity;
-        varying float vRand;
-        varying float vHalo;
-
-        void main(){
-          vec2 uv = gl_PointCoord;
-          // 采样“马”字纹理（自带柔光）
-          vec4 tex = texture2D(uMap, uv);
-
-          // 额外 halo：中心更亮
-          vec2 p = uv - 0.5;
-          float d = length(p);
-          float core = smoothstep(0.50, 0.0, d);
-          float halo = smoothstep(0.62, 0.18, d) * 0.55;
-
-          float a = tex.a * (0.62 + 0.55 * vHalo) + (core + halo) * 0.10;
-          a *= uOpacity;
-          if(a < 0.01) discard;
-
-          // 颜色微变化（金/红/白），增强“金碧辉煌”
-          vec3 gold = vec3(0.83, 0.69, 0.22);
-          vec3 red  = vec3(0.70, 0.07, 0.15);
-          vec3 white= vec3(0.98, 0.97, 1.00);
-
-          float m1 = smoothstep(0.10, 0.92, vRand);
-          float m2 = smoothstep(0.70, 0.99, vRand);
-          vec3 col = mix(white, gold, m1);
-          col = mix(col, red, (m2 - 0.70) * 0.65);
-
-          // 让字形内部更“金属亮”
-          col *= (0.95 + 0.55 * tex.r);
-          col *= (1.15 + 0.65 * halo);
-
-          gl_FragColor = vec4(col, a);
-        }
-      `
-    });
-
-    // 绑定纹理到 shader
-    mat.uniforms.uMap = { value: maTex };
-
-    const points = new THREE.Points(geo, mat);
-    group.add(points);
-    points.layers.enable(BLOOM_LAYER);
-
-    // 背景星尘（少量）
-    const starCount = IS_MOBILE ? 4000 : 7000;
-    const starGeo = new THREE.BufferGeometry();
-    const starPos = new Float32Array(starCount * 3);
-    const starRnd = new Float32Array(starCount);
-    const starSz  = new Float32Array(starCount);
-
-    for (let i=0;i<starCount;i++){
-      const R = 28;
-      const u = Math.random(), v = Math.random();
-      const theta = u * Math.PI * 2;
-      const phi = Math.acos(2 * v - 1);
-      const rr = (0.55 + Math.pow(Math.random(), 0.55) * 0.45) * R;
-      starPos[i*3+0] = rr * Math.sin(phi) * Math.cos(theta);
-      starPos[i*3+1] = rr * Math.cos(phi) * 0.85 + 2.0;
-      starPos[i*3+2] = rr * Math.sin(phi) * Math.sin(theta);
-      starRnd[i] = Math.random();
-      starSz[i]  = 0.35 + Math.pow(Math.random(), 1.6) * 1.15;
-    }
-
-    starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
-    starGeo.setAttribute("aRand", new THREE.BufferAttribute(starRnd, 1));
-    starGeo.setAttribute("aSize", new THREE.BufferAttribute(starSz, 1));
-
-    const starMat = new THREE.ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      uniforms: { uTime:{value:0} },
-      vertexShader: /* glsl */`
-        uniform float uTime;
-        attribute float aRand;
-        attribute float aSize;
-        varying float vTw;
-        void main(){
-          vec3 pos = position;
-          float t = uTime * (0.35 + aRand * 1.2);
-          pos.x += sin(t + aRand*9.0) * 0.18;
-          pos.y += cos(t*0.9 + aRand*7.0) * 0.10;
-          pos.z += sin(t*0.8 + aRand*5.0) * 0.18;
-
-          vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-          gl_Position = projectionMatrix * mv;
-
-          float dist = max(0.001, -mv.z);
-          gl_PointSize = clamp(aSize * (220.0 / dist), 0.4, 2.4);
-
-          vTw = 0.55 + 0.45 * sin(uTime * 2.0 + aRand * 19.0);
-        }
-      `,
-      fragmentShader: /* glsl */`
-        precision highp float;
-        varying float vTw;
+        varying vec3 vCol;
+        varying float vA;
         void main(){
           vec2 uv = gl_PointCoord - 0.5;
           float d = length(uv);
-          float core = smoothstep(0.22, 0.0, d);
-          float halo = smoothstep(0.50, 0.15, d) * 0.55;
-
-          vec3 gold = vec3(0.83, 0.69, 0.22);
-          vec3 white= vec3(0.96, 0.97, 1.00);
-
-          float a = (core + halo) * (0.40 + 0.80 * vTw);
+          float core = smoothstep(0.25, 0.0, d);
+          float halo = smoothstep(0.60, 0.18, d) * 0.45;
+          float a = (core + halo) * vA;
           if(a < 0.01) discard;
-
-          vec3 col = mix(white, gold, 0.55);
-          gl_FragColor = vec4(col * (1.2 + halo), a);
+          gl_FragColor = vec4(vCol * (1.10 + 0.80*halo), a);
         }
       `
     });
+  }
 
-    const stars = new THREE.Points(starGeo, starMat);
-    scene.add(stars);
-    stars.layers.enable(BLOOM_LAYER);
-
-    // ---------------------------
-    // 状态机：合拢 / 散开 / 视频放大
-    // ---------------------------
-    const Mode = {
-      COLLAPSE: "COLLAPSE",
-      SCATTER: "SCATTER",
-      FOCUS: "FOCUS"
-    };
-
-    let mode = Mode.COLLAPSE;
-
-    // mix：0 合拢；1 散开
-    let mix = 0, targetMix = 0;
-
-    // focus：0 非视频；1 视频
-    let focus = 0, targetFocus = 0;
-
-    let currentIdiom = "马到成功";
-    let focusIdiom = "马到成功";
-
-    function showFocusOverlay(){
-      focusOverlay.classList.add("show");
-    }
-    function hideFocusOverlay(){
-      focusOverlay.classList.remove("show");
+  spawnBurst(origin){
+    if(this.bursts.length >= this.maxBursts){
+      const old = this.bursts.shift();
+      this.group.remove(old.points);
+      old.geo.dispose();
+      old.points.material.dispose();
     }
 
-    function setMode(next){
-      if (mode === next) return;
+    const COUNT = IS_MOBILE ? 260 : 420;
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(COUNT*3);
+    const vel = new Float32Array(COUNT*3);
+    const col = new Float32Array(COUNT*3);
+    const seed = new Float32Array(COUNT);
+    const life = new Float32Array(COUNT);
 
-      // 进入合拢态：随机抽一个新成语并更新目标点
-      if (next === Mode.COLLAPSE){
-        const prev = currentIdiom;
-        currentIdiom = pickRandomIdiom(prev);
-        buildHomeTargetsForIdiom(currentIdiom);
-        targetMix = 0;
-        targetFocus = 0;
-        hideFocusOverlay();
-        modeBadge.textContent = "状态：合拢成语";
-        toast(`合拢成语：${currentIdiom}`);
-      }
+    const now = perfTime;
+    for(let i=0;i<COUNT;i++){
+      pos[i*3+0]=origin.x;
+      pos[i*3+1]=origin.y;
+      pos[i*3+2]=origin.z;
 
-      if (next === Mode.SCATTER){
-        targetMix = 1;
-        targetFocus = 0;
-        hideFocusOverlay();
-        modeBadge.textContent = "状态：散开漂浮";
-        toast("散开漂浮：移动手掌可旋转视角");
-      }
+      const u=Math.random(), v=Math.random();
+      const theta=u*Math.PI*2;
+      const phi=Math.acos(2*v-1);
+      const sp= 1.2 + Math.random()*2.4;
+      vel[i*3+0]=Math.sin(phi)*Math.cos(theta)*sp;
+      vel[i*3+1]=Math.cos(phi)*sp * 0.9;
+      vel[i*3+2]=Math.sin(phi)*Math.sin(theta)*sp;
 
-      if (next === Mode.FOCUS){
-        targetMix = 1;
-        targetFocus = 1;
-        showFocusOverlay();
-        modeBadge.textContent = "状态：视频放大";
-        toast("视频放大态：三指抓可切换视频/成语");
-      }
+      const h = Math.random();
+      const c = new THREE.Color().setHSL(h, 0.95, 0.60);
+      col[i*3+0]=c.r;
+      col[i*3+1]=c.g;
+      col[i*3+2]=c.b;
 
-      mode = next;
-      updateStatusLine();
+      seed[i]=now + Math.random()*0.06;
+      life[i]= 0.95 + Math.random()*0.55;
     }
 
-    function updateStatusLine(){
-      if (mode === Mode.COLLAPSE){
-        statusText.textContent = `当前成语：${currentIdiom}（握拳：合拢 | 张开：散开 | 三指抓：视频）`;
-      } else if (mode === Mode.SCATTER){
-        statusText.textContent = "散开漂浮中：张开手掌移动可旋转视角；三指抓进入视频放大态。";
-      } else {
-        statusText.textContent = `视频放大态：${focusIdiom}（握拳/张开可退出；三指抓切换）`;
+    geo.setAttribute("position", new THREE.BufferAttribute(pos,3));
+    geo.setAttribute("aVel", new THREE.BufferAttribute(vel,3));
+    geo.setAttribute("aCol", new THREE.BufferAttribute(col,3));
+    geo.setAttribute("aSeed", new THREE.BufferAttribute(seed,1));
+    geo.setAttribute("aLife", new THREE.BufferAttribute(life,1));
+
+    const points = new THREE.Points(geo, this.mat.clone());
+    points.layers.enable(BLOOM_LAYER);
+    this.group.add(points);
+
+    this.bursts.push({ geo, points, born: now, ttl: 2.2 });
+  }
+
+  update(time){
+    // update uniform
+    for(const b of this.bursts){
+      b.points.material.uniforms.uTime.value = time;
+    }
+    // cull expired
+    for(let i=this.bursts.length-1;i>=0;i--){
+      const b=this.bursts[i];
+      if(time - b.born > b.ttl){
+        this.group.remove(b.points);
+        b.geo.dispose();
+        b.points.material.dispose();
+        this.bursts.splice(i,1);
       }
     }
+  }
+}
+const fireworks = new Fireworks(IS_MOBILE ? 7 : 10);
 
-    // ---------------------------
-    // 合拢态目标生成：把“马”字粒子凝聚成四字成语
-    // ---------------------------
-    function buildHomeTargetsForIdiom(idiom){
-      // 采样点数：根据设备适配
-      const points2D = sampleTextPoints(idiom, {
-        fontSize: IS_MOBILE ? 190 : 240,
-        step: IS_MOBILE ? 4 : 3,
-        padding: IS_MOBILE ? 60 : 80,
-        threshold: 10,
-        worldWidth: IS_MOBILE ? 6.6 : 7.6
-      });
+/* ---------------------------
+   Camera Control (scatter rotate)
+--------------------------- */
+let yaw = 0.0, pitch = 0.14, radius = 10.6;
+let yawT = yaw, pitchT = pitch;
 
-      // 成语点云中心略微前移一些（立体层次）
-      const centerZ = -0.6;
+let lastPalmX=null, lastPalmY=null;
 
-      const M = Math.max(1, points2D.length);
-      for (let i = 0; i < PARTICLE_COUNT; i++){
-        const p = points2D[i % M];
-        // 微抖动：形成更“粒子化”的笔画
-        const j = (i % 7) * 0.02;
-        const rx = (aRand[i] - 0.5) * (IS_MOBILE ? 0.08 : 0.10);
-        const ry = (Math.sin(aRand[i] * 999.0) - 0.5) * (IS_MOBILE ? 0.08 : 0.10);
-        const rz = (Math.cos(aRand[i] * 777.0) - 0.5) * (IS_MOBILE ? 0.22 : 0.28);
+function applyCamera(dt){
+  // COHESION: slow cinematic orbit
+  if(mode===Mode.COHESION){
+    yawT += dt * 0.16;
+    pitchT = damp(pitchT, 0.12, 2.6, dt);
+  } else if(mode===Mode.SCATTER){
+    pitchT = clamp(pitchT, -0.18, 0.62);
+  } else if(mode===Mode.REVEAL){
+    pitchT = damp(pitchT, 0.14, 3.0, dt);
+  }
 
-        aHome[i*3+0] = p.x + rx + j;
-        aHome[i*3+1] = p.y + ry;
-        aHome[i*3+2] = centerZ + rz;
-      }
-      geo.attributes.aHome.needsUpdate = true;
+  yaw = damp(yaw, yawT, 6.0, dt);
+  pitch = damp(pitch, pitchT, 6.0, dt);
 
-      // 更新合拢态的“当前位置”属性不是必须（我们用 shader mix），但保持 bounding 更稳
-      geo.computeBoundingSphere();
+  const r = radius;
+  const cx = Math.sin(yaw) * Math.cos(pitch) * r;
+  const cy = 2.25 + Math.sin(pitch) * r * 0.30;
+  const cz = Math.cos(yaw) * Math.cos(pitch) * r;
+
+  camera.position.set(cx, cy, cz);
+  camera.lookAt(0, 2.35, 0);
+
+  goldPoint.position.set(
+    Math.sin(yaw*0.7)*1.8,
+    4.4 + Math.sin(perfTime*0.7)*0.12,
+    2.0 + Math.cos(yaw*0.7)*1.2
+  );
+}
+
+/* ---------------------------
+   Music
+--------------------------- */
+let musicEnabled=false, musicPrepared=false;
+async function enableMusic(){
+  try{
+    if(!musicPrepared){
+      bgm.src=BGM_URL;
+      bgm.load();
+      musicPrepared=true;
     }
+    bgm.volume=0.28;
+    await bgm.play();
+    musicEnabled=true;
+    btnMusic.textContent="音乐：开";
+  }catch(e){
+    statusText.textContent="浏览器阻止自动播放：请再次点击“音乐”开启。";
+    musicEnabled=false;
+    btnMusic.textContent="音乐：关";
+  }
+}
+function disableMusic(){
+  bgm.pause();
+  musicEnabled=false;
+  btnMusic.textContent="音乐：关";
+}
+btnMusic.addEventListener("click", ()=>{ musicEnabled?disableMusic():enableMusic(); });
 
-    // 初始成语
-    buildHomeTargetsForIdiom(currentIdiom);
-    updateStatusLine();
+/* ---------------------------
+   MediaPipe Hands Gestures
+   - 握拳：COHESION（并随机换成语）
+   - 张开：SCATTER
+   - 掌心移动：SCATTER旋转相机
+   - 三指抓：抓红包 → REVEAL
+--------------------------- */
+let hands=null;
+let handEnabled=false;
+let lastLandmarks=null;
+let lastLandmarksTs=0;
 
-    // ---------------------------
-    // 相机控制：散开态可旋转
-    // ---------------------------
-    let yaw = 0.0, pitch = 0.14, radius = 8.8;
-    let yawT = yaw, pitchT = pitch, radiusT = radius;
+function dist3(a,b){
+  const dx=a.x-b.x, dy=a.y-b.y, dz=(a.z||0)-(b.z||0);
+  return Math.sqrt(dx*dx+dy*dy+dz*dz);
+}
+function extended(lm, tip, pip, wristIndex=0){
+  const wrist = lm[wristIndex];
+  const dt = dist3(lm[tip], wrist);
+  const dp = dist3(lm[pip], wrist);
+  return dt > dp*1.12;
+}
 
-    function applyCamera(dt){
-      // 合拢态：缓慢环绕（更“仪式感”）
-      if (mode === Mode.COLLAPSE){
-        yawT += dt * 0.22;
-        pitchT = damp(pitchT, 0.10, 2.6, dt);
-        radiusT = damp(radiusT, 8.8, 2.2, dt);
-      }
+function computeGesture(lm){
+  // palm center
+  const palmIdx=[0,5,9,13,17];
+  const palm={x:0,y:0,z:0};
+  for(const i of palmIdx){ palm.x+=lm[i].x; palm.y+=lm[i].y; palm.z+=lm[i].z; }
+  palm.x/=palmIdx.length; palm.y/=palmIdx.length; palm.z/=palmIdx.length;
 
-      // 散开态：允许用户手势/鼠标改变 yawT/pitchT
-      if (mode === Mode.SCATTER){
-        pitchT = clamp(pitchT, -0.18, 0.62);
-        radiusT = damp(radiusT, 9.2, 2.2, dt);
-      }
+  const wrist = lm[0];
+  const handSize = Math.max(1e-6, dist3(wrist, lm[9]));
 
-      // 视频态：镜头稍微拉近一点，舞台更集中
-      if (mode === Mode.FOCUS){
-        pitchT = damp(pitchT, 0.12, 3.0, dt);
-        radiusT = damp(radiusT, 7.6, 2.6, dt);
-      }
+  const thumbExt  = extended(lm,4,2);
+  const indexExt  = extended(lm,8,6);
+  const middleExt = extended(lm,12,10);
+  const ringExt   = extended(lm,16,14);
+  const pinkyExt  = extended(lm,20,18);
 
-      yaw = damp(yaw, yawT, 6.2, dt);
-      pitch = damp(pitch, pitchT, 6.2, dt);
-      radius = damp(radius, radiusT, 6.0, dt);
+  const extCount = [thumbExt,indexExt,middleExt,ringExt,pinkyExt].filter(Boolean).length;
 
-      const cx = Math.sin(yaw) * Math.cos(pitch) * radius;
-      const cy = 2.0 + Math.sin(pitch) * radius * 0.35;
-      const cz = Math.cos(yaw) * Math.cos(pitch) * radius;
-      camera.position.set(cx, cy, cz);
-      camera.lookAt(0, 2.25, 0);
+  const openHand = extCount>=4;
 
-      // 灯光轻跟随，提升“金属感”
-      goldPoint.position.set(
-        Math.sin(yaw * 0.7) * 1.8,
-        4.3 + Math.sin(perfTime * 0.7) * 0.10,
-        2.3 + Math.cos(yaw * 0.7) * 1.2
-      );
-      redPoint.position.set(
-        -2.4 + Math.cos(yaw * 0.55) * 0.5,
-        3.0 + Math.sin(perfTime * 0.9) * 0.08,
-        2.4 + Math.sin(yaw * 0.55) * 0.4
-      );
+  // fist: most fingers not extended and tips close to palm
+  const tips=[4,8,12,16,20];
+  let avg=0;
+  for(const t of tips) avg += dist3(lm[t], palm);
+  avg/=tips.length;
+  const closeHand = (extCount<=1) && (avg/handSize < 0.92);
+
+  // 三指抓：拇指-食指 和 拇指-中指都靠近；同时无名指/小指更倾向收起
+  const pinchTI = (dist3(lm[4], lm[8]) / handSize) < 0.35;
+  const pinchTM = (dist3(lm[4], lm[12]) / handSize) < 0.38;
+  const threeGrab = pinchTI && pinchTM && !ringExt && !pinkyExt;
+
+  return { palm, openHand, closeHand, threeGrab };
+}
+
+let grabDown=false;
+let grabCooldown=0;
+
+function handleGesture(g, dt){
+  // Mode switching
+  if(g.openHand && mode!==Mode.REVEAL) setMode(Mode.SCATTER);
+  if(g.closeHand) setMode(Mode.COHESION);
+
+  // scatter rotate
+  if(mode===Mode.SCATTER && !g.threeGrab && !g.closeHand){
+    const x=g.palm.x, y=g.palm.y;
+    if(lastPalmX!=null){
+      const dx = x-lastPalmX;
+      const dy = y-lastPalmY;
+      yawT += (-dx)*4.2;
+      pitchT += ( dy)*3.0;
     }
+    lastPalmX=x; lastPalmY=y;
+  }else{
+    lastPalmX=lastPalmY=null;
+  }
 
-    // 鼠标/触控拖拽（手势未开时也能玩）
-    let dragging = false;
-    let lastX = 0, lastY = 0;
+  // grab trigger
+  grabCooldown = Math.max(0, grabCooldown-dt);
+  const pressed = g.threeGrab && grabCooldown<=0;
 
-    canvas.addEventListener("pointerdown", (e)=>{
-      dragging = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
-    });
-    window.addEventListener("pointerup", ()=> dragging = false);
-    window.addEventListener("pointermove", (e)=>{
-      if (!dragging) return;
-      const dx = e.clientX - lastX;
-      const dy = e.clientY - lastY;
-      lastX = e.clientX; lastY = e.clientY;
+  if(pressed && !grabDown){
+    grabDown=true;
+    // in scatter or reveal -> begin (or reroll)
+    beginReveal();
+    grabCooldown = 0.55;
+  }
+  if(!g.threeGrab) grabDown=false;
+}
 
-      if (mode !== Mode.SCATTER) return;
-      yawT += dx * 0.0042;
-      pitchT += dy * 0.0034;
-    });
+async function startHands(){
+  if(!window.Hands){
+    statusText.textContent="MediaPipe Hands 未加载：请检查网络。";
+    return;
+  }
+  if(!navigator.mediaDevices?.getUserMedia){
+    statusText.textContent="当前浏览器不支持摄像头 API。";
+    return;
+  }
 
-    // ---------------------------
-    // MediaPipe Hands：手势识别
-    // ---------------------------
-    let hands = null;
-    let handEnabled = false;
-
-    let lastLandmarks = null;
-    let lastLandmarksTs = 0;
-
-    function dist3(a, b){
-      const dx = a.x - b.x;
-      const dy = a.y - b.y;
-      const dz = (a.z || 0) - (b.z || 0);
-      return Math.sqrt(dx*dx + dy*dy + dz*dz);
+  hands = new window.Hands({
+    locateFile: (file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`
+  });
+  hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.6,
+    minTrackingConfidence: 0.6
+  });
+  hands.onResults((res)=>{
+    const lm = res.multiHandLandmarks?.[0] || null;
+    if(lm){
+      lastLandmarks=lm;
+      lastLandmarksTs=performance.now();
     }
+  });
 
-    function extended(landmarks, tip, pip){
-      const wrist = landmarks[0];
-      const dt = dist3(landmarks[tip], wrist);
-      const dp = dist3(landmarks[pip], wrist);
-      return dt > dp * 1.12;
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio:false,
+    video:{ facingMode:"user", width:{ideal:640}, height:{ideal:480} }
+  });
+  camVideoEl.srcObject = stream;
+  await camVideoEl.play();
+
+  handEnabled=true;
+  led.classList.add("on");
+  statusText.textContent="手势已启用：握拳/张开/旋转/三指抓红包。";
+
+  let busy=false;
+  let lastSent=0;
+  async function pump(){
+    if(!handEnabled) return;
+    const now=performance.now();
+    if(!busy && (now-lastSent)>33){
+      busy=true;
+      lastSent=now;
+      try{ await hands.send({ image: camVideoEl }); }catch(e){}
+      busy=false;
     }
+    requestAnimationFrame(pump);
+  }
+  pump();
+}
 
-    function computeGesture(landmarks){
-      // palm center
-      const palmIdx = [0, 5, 9, 13, 17];
-      const palm = { x:0, y:0, z:0 };
-      for (const i of palmIdx){
-        palm.x += landmarks[i].x;
-        palm.y += landmarks[i].y;
-        palm.z += landmarks[i].z;
+btnStart.addEventListener("click", async ()=>{
+  try{
+    btnStart.disabled=true;
+    btnStart.textContent="正在启用…";
+    await startHands();
+    btnStart.textContent="手势：已开启";
+  }catch(e){
+    statusText.textContent="启用失败：请允许摄像头权限，并确保在 HTTPS（GitHub Pages）访问。";
+    btnStart.disabled=false;
+    btnStart.textContent="启用手势";
+  }
+});
+
+/* ---------------------------
+   Mouse fallback (double click to grab)
+--------------------------- */
+let dragging=false, lastX=0, lastY=0;
+let lastTap=0;
+
+canvas.addEventListener("pointerdown",(e)=>{
+  dragging=true; lastX=e.clientX; lastY=e.clientY;
+});
+window.addEventListener("pointerup",()=>dragging=false);
+window.addEventListener("pointermove",(e)=>{
+  if(!dragging) return;
+  if(mode!==Mode.SCATTER) return;
+  const dx=e.clientX-lastX, dy=e.clientY-lastY;
+  lastX=e.clientX; lastY=e.clientY;
+  yawT += dx*0.0042;
+  pitchT += dy*0.0032;
+});
+canvas.addEventListener("click",()=>{
+  const now=performance.now();
+  if(now-lastTap<360){
+    // double click -> reveal
+    if(mode===Mode.SCATTER || mode===Mode.REVEAL) beginReveal();
+  }
+  lastTap=now;
+});
+
+/* ---------------------------
+   UI actions
+--------------------------- */
+btnHelp.addEventListener("click", ()=>{
+  tips.style.display = (tips.style.display==="none") ? "flex" : "none";
+});
+
+btnReset.addEventListener("click", ()=>{
+  // reset scatter positions
+  for(let i=0;i<ENVELOPE_COUNT;i++) envScatter[i] = sampleScatterSphere();
+  pickNewIdiom(true);
+
+  // mode reset
+  revealPhase=0; revealT=0;
+  grabGroup.visible=false;
+  videoGroup.visible=false;
+  try{ videoEl.pause(); }catch(e){}
+  setMode(Mode.COHESION);
+});
+
+/* ---------------------------
+   Background mood updates
+--------------------------- */
+function updateMood(dt){
+  const f = (mode===Mode.REVEAL) ? 1 : 0;
+  const s = (mode===Mode.SCATTER) ? 1 : 0;
+
+  bloomPass.strength  = damp(bloomPass.strength, 1.14 + 0.10*s + 0.18*f, 2.8, dt);
+  bloomPass.radius    = damp(bloomPass.radius,   0.60 + 0.05*s + 0.10*f, 2.8, dt);
+  bloomPass.threshold = damp(bloomPass.threshold,0.16 - 0.01*s - 0.03*f, 2.8, dt);
+
+  renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.06 + 0.02*s + 0.06*f, 2.4, dt);
+
+  // bloom mix: in reveal, slightly reduce base bloom to keep video/caption crisp
+  bloomMixPass.material.uniforms.uBloomIntensity.value = lerp(1.0, 0.55, reveal);
+}
+
+/* ---------------------------
+   Main render loop
+--------------------------- */
+let lastTime=performance.now();
+let perfTime=0;
+let fireworkCooldown=0;
+
+setMode(Mode.COHESION);
+
+function animate(){
+  const now=performance.now();
+  const dt = clamp((now-lastTime)/1000, 0.0, 0.035);
+  lastTime=now;
+  perfTime += dt;
+
+  // hand gestures
+  if(handEnabled && lastLandmarks && (now-lastLandmarksTs)<180){
+    const g=computeGesture(lastLandmarks);
+    handleGesture(g, dt);
+  }
+
+  // smooth transitions
+  mix = damp(mix, targetMix, 2.8, dt);
+  reveal = damp(reveal, targetReveal, 4.2, dt);
+
+  // update idiom
+  idiomMat.uniforms.uTime.value = perfTime;
+  idiomMat.uniforms.uMix.value = mix;
+  idiomMat.uniforms.uFocus.value = reveal;
+
+  // envelopes
+  updateEnvelopes(perfTime, mix, reveal, dt);
+
+  // camera
+  applyCamera(dt);
+
+  // reveal animation (红包抓取→放大→开封→视频)
+  if(mode===Mode.REVEAL){
+    // keep idiomGroup slightly dim in reveal so fireworks/video stand out
+    idiomGroup.scale.setScalar(lerp(1.0, 1.02, reveal));
+
+    // animate grabGroup in front of camera
+    const fwd = new THREE.Vector3();
+    camera.getWorldDirection(fwd);
+    const targetPos = camera.position.clone().addScaledVector(fwd, 5.6);
+
+    if(revealPhase===1){
+      // fly-in + scale up
+      revealT += dt;
+      const t = clamp(revealT/0.55, 0, 1);
+      grabGroup.position.lerp(targetPos, 0.10 + 0.35*t);
+      grabGroup.quaternion.slerp(camera.quaternion, 0.12 + 0.28*t);
+
+      const sc = lerp(0.18, 1.0, smoothstep(0,1,t));
+      grabGroup.scale.setScalar(sc);
+
+      // small sway
+      grabGroup.position.add(new THREE.Vector3(
+        Math.sin(perfTime*2.0)*0.03,
+        Math.cos(perfTime*1.7)*0.02,
+        0
+      ).applyQuaternion(camera.quaternion));
+
+      if(t>=1){
+        revealPhase=2;
+        revealT=0;
+        statusText.textContent="红包开封中…";
+        focusTextEl.textContent="红包开封中…";
       }
-      palm.x /= palmIdx.length;
-      palm.y /= palmIdx.length;
-      palm.z /= palmIdx.length;
+    }else if(revealPhase===2){
+      // open flap
+      revealT += dt;
+      const t = clamp(revealT/0.60, 0, 1);
+      const ease = smoothstep(0,1,t);
 
-      const wrist = landmarks[0];
-      const handSize = Math.max(1e-6, dist3(wrist, landmarks[9])); // wrist -> middle MCP
+      // flap rotates backward
+      grabFlap.rotation.x = -ease * 1.35;
 
-      const thumbExt  = extended(landmarks, 4, 2);
-      const indexExt  = extended(landmarks, 8, 6);
-      const middleExt = extended(landmarks, 12, 10);
-      const ringExt   = extended(landmarks, 16, 14);
-      const pinkyExt  = extended(landmarks, 20, 18);
+      // stamp pulses
+      grabStamp.scale.setScalar(1.0 + Math.sin(perfTime*6.0)*0.02);
 
-      const extCount = [thumbExt,indexExt,middleExt,ringExt,pinkyExt].filter(Boolean).length;
+      if(t>=1){
+        revealPhase=3;
+        revealT=0;
+        grabGroup.visible = false; // envelope "disappears into blessing"
+        switchToVideoStage();
+      }
+    }else if(revealPhase===3){
+      // keep video in front of camera; slight breathing
+      if(videoGroup.visible){
+        const fwd2 = new THREE.Vector3();
+        camera.getWorldDirection(fwd2);
+        const pos = camera.position.clone().addScaledVector(fwd2, 6.2);
+        videoGroup.position.lerp(pos, 0.12);
+        videoGroup.quaternion.slerp(camera.quaternion, 0.12);
 
-      // 五指张开（散开）
-      const openHand = (extCount >= 4);
-
-      // 握拳（合拢）
-      const closeHand = (extCount <= 1) &&
-        (dist3(landmarks[8], palm) / handSize < 0.95) &&
-        (dist3(landmarks[12], palm) / handSize < 0.95);
-
-      // 三指抓：拇指/食指/中指靠拢（比“捏合”更强）
-      const dTI = dist3(landmarks[4], landmarks[8]) / handSize;
-      const dTM = dist3(landmarks[4], landmarks[12]) / handSize;
-      const dIM = dist3(landmarks[8], landmarks[12]) / handSize;
-
-      const threeFingerGrab =
-        (dTI < 0.40 && dTM < 0.45 && dIM < 0.48) &&
-        // ring/pinky 不强制，但避免“全拳”误判
-        !(closeHand);
-
-      return { palm, openHand, closeHand, threeFingerGrab };
-    }
-
-    let lastPalmX = null, lastPalmY = null;
-    let grabDown = false;
-    let grabCooldown = 0;
-
-    function handleGesture(g, dt){
-      // 一次只响应一种高优先级动作
-      if (g.closeHand){
-        setMode(Mode.COLLAPSE);
-      } else if (g.openHand && mode !== Mode.FOCUS){
-        setMode(Mode.SCATTER);
-      } else if (g.openHand && mode === Mode.FOCUS){
-        // 视频态：张开 -> 回散开
-        setMode(Mode.SCATTER);
+        const breathe = 1.0 + Math.sin(perfTime*1.2)*0.01;
+        videoGroup.scale.setScalar(breathe);
       }
 
-      // 三指抓：进入/切换视频态
-      grabCooldown = Math.max(0, grabCooldown - dt);
-      const grabPressed = g.threeFingerGrab && grabCooldown <= 0;
-
-      if (grabPressed && !grabDown){
-        grabDown = true;
-        if (mode === Mode.SCATTER){
-          setMode(Mode.FOCUS);
-          focusIdiom = pickRandomIdiom(focusIdiom);
-          focusIdiomEl.textContent = focusIdiom;
-          playRandomVideo();
-          updateStatusLine();
-        } else if (mode === Mode.FOCUS){
-          focusIdiom = pickRandomIdiom(focusIdiom);
-          focusIdiomEl.textContent = focusIdiom;
-          playRandomVideo();
-          updateStatusLine();
-        } else if (mode === Mode.COLLAPSE){
-          // 合拢态也允许直接进视频态（先散开再进）
-          setMode(Mode.FOCUS);
-          focusIdiom = pickRandomIdiom(focusIdiom);
-          focusIdiomEl.textContent = focusIdiom;
-          playRandomVideo();
-          updateStatusLine();
-        }
-        grabCooldown = 0.55;
-      }
-      if (!g.threeFingerGrab) grabDown = false;
-
-      // 散开态：手掌移动驱动旋转（符合“打开后的手掌旋转/移动调整相机角度”的交互感）
-      if (mode === Mode.SCATTER && g.openHand && !g.threeFingerGrab){
-        const x = g.palm.x;
-        const y = g.palm.y;
-        if (lastPalmX != null){
-          const dx = x - lastPalmX;
-          const dy = y - lastPalmY;
-          yawT   += (-dx) * 4.2;
-          pitchT += ( dy) * 3.0;
-        }
-        lastPalmX = x; lastPalmY = y;
-      } else {
-        lastPalmX = lastPalmY = null;
-      }
-    }
-
-    async function startHands(){
-      if (!window.Hands){
-        statusText.textContent = "MediaPipe Hands 未加载（请检查网络/CDN）。";
-        return;
-      }
-      if (!navigator.mediaDevices?.getUserMedia){
-        statusText.textContent = "当前浏览器不支持相机接口。";
-        return;
-      }
-
-      hands = new window.Hands({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`
-      });
-      hands.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.6
-      });
-      hands.onResults((results)=>{
-        const lm = results.multiHandLandmarks?.[0] || null;
-        if (lm){
-          lastLandmarks = lm;
-          lastLandmarksTs = performance.now();
-        }
-      });
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }
-      });
-
-      camVideo.srcObject = stream;
-      await camVideo.play();
-
-      handEnabled = true;
-      led.classList.add("on");
-      toast("手势识别已开启：握拳/张开/三指抓/移动手掌");
-      statusText.textContent = "手势识别已开启：握拳合拢、张开散开、三指抓视频、移动手掌旋转视角。";
-
-      // 以 requestAnimationFrame 驱动 send（节流）
-      let busy = false;
-      let lastSent = 0;
-
-      async function pump(){
-        if (!handEnabled) return;
-        const now = performance.now();
-        if (!busy && (now - lastSent) > 33){
-          busy = true;
-          lastSent = now;
-          try { await hands.send({ image: camVideo }); } catch(e) {}
-          busy = false;
-        }
-        requestAnimationFrame(pump);
-      }
-      pump();
-    }
-
-    btnStart.addEventListener("click", async ()=>{
-      try{
-        btnStart.disabled = true;
-        btnStart.textContent = "正在开启…";
-        await startHands();
-        btnStart.textContent = "手势识别：已开启";
-      } catch(e){
-        btnStart.disabled = false;
-        btnStart.textContent = "开启手势识别（相机）";
-        statusText.textContent = "开启失败：请允许相机权限，并确保在 https 页面访问（GitHub Pages 默认 https）。";
-        toast("开启失败：请允许相机权限", 2200);
-      }
-    });
-
-    btnHelp.addEventListener("click", ()=>{
-      tips.style.display = (tips.style.display === "none") ? "flex" : "none";
-    });
-
-    btnIdiom.addEventListener("click", ()=>{
-      if (mode !== Mode.COLLAPSE){
-        toast("提示：随机成语将在合拢态更新（也可直接握拳合拢）。");
-        return;
-      }
-      const prev = currentIdiom;
-      currentIdiom = pickRandomIdiom(prev);
-      buildHomeTargetsForIdiom(currentIdiom);
-      toast(`当前成语：${currentIdiom}`);
-      updateStatusLine();
-    });
-
-    btnReset.addEventListener("click", ()=>{
-      // 重新生成散开分布
-      for (let i=0;i<PARTICLE_COUNT;i++){
-        const s = sampleScatterPos();
-        aScatter[i*3+0] = s.x;
-        aScatter[i*3+1] = s.y;
-        aScatter[i*3+2] = s.z;
-      }
-      geo.attributes.aScatter.needsUpdate = true;
-
-      // 回到合拢态并随机新成语
-      setMode(Mode.COLLAPSE);
-      yawT = 0; pitchT = 0.14; radiusT = 8.8;
-      toast("已重置：合拢成语");
-    });
-
-    btnFS.addEventListener("click", async ()=>{
-      try{
-        if (!document.fullscreenElement){
-          await document.documentElement.requestFullscreen?.();
-          toast("已进入全屏");
-        } else {
-          await document.exitFullscreen?.();
-          toast("已退出全屏");
-        }
-      } catch(e){
-        toast("全屏操作被浏览器阻止");
-      }
-    });
-
-    // ---------------------------
-    // 氛围参数随状态变化（辉光/雾/曝光）
-    // ---------------------------
-    function updateMood(dt){
-      if (mode === Mode.COLLAPSE){
-        bloomPass.strength   = damp(bloomPass.strength, 1.15, 2.6, dt);
-        bloomPass.radius     = damp(bloomPass.radius,   0.62, 2.6, dt);
-        bloomPass.threshold  = damp(bloomPass.threshold,0.16, 2.6, dt);
-        fog.density          = damp(fog.density,        0.092,2.2, dt);
-        renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.12, 2.2, dt);
-      } else if (mode === Mode.SCATTER){
-        bloomPass.strength   = damp(bloomPass.strength, 1.22, 2.6, dt);
-        bloomPass.radius     = damp(bloomPass.radius,   0.70, 2.6, dt);
-        bloomPass.threshold  = damp(bloomPass.threshold,0.15, 2.6, dt);
-        fog.density          = damp(fog.density,        0.080,2.2, dt);
-        renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.14, 2.2, dt);
-      } else {
-        bloomPass.strength   = damp(bloomPass.strength, 1.30, 2.8, dt);
-        bloomPass.radius     = damp(bloomPass.radius,   0.82, 2.8, dt);
-        bloomPass.threshold  = damp(bloomPass.threshold,0.14, 2.8, dt);
-        fog.density          = damp(fog.density,        0.072,2.2, dt);
-        renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.16, 2.2, dt);
+      // fireworks spawn loop in reveal
+      fireworkCooldown = Math.max(0, fireworkCooldown-dt);
+      if(fireworkCooldown<=0){
+        const u = Math.random()*2-1;
+        const v = Math.random()*0.7 + 0.1;
+        const origin = new THREE.Vector3(u*3.2, 3.0+v*2.2, -3.0 + Math.random()*2.0);
+        fireworks.spawnBurst(origin);
+        fireworkCooldown = IS_MOBILE ? (0.85 + Math.random()*0.35) : (0.65 + Math.random()*0.28);
       }
     }
+  }else{
+    // not reveal
+    grabGroup.visible = false;
+    videoGroup.visible = false;
+  }
 
-    // ---------------------------
-    // 渲染循环
-    // ---------------------------
-    let lastTime = performance.now();
-    let perfTime = 0;
+  fireworks.update(perfTime);
 
-    function animate(){
-      const now = performance.now();
-      const dt = clamp((now - lastTime) / 1000, 0.0, 0.035);
-      lastTime = now;
-      perfTime += dt;
+  // mood
+  updateMood(dt);
 
-      // 手势驱动状态机
-      if (handEnabled && lastLandmarks && (now - lastLandmarksTs) < 180){
-        const g = computeGesture(lastLandmarks);
-        handleGesture(g, dt);
-      }
+  // render selective bloom
+  camera.layers.set(BLOOM_LAYER);
+  bloomComposer.render();
+  camera.layers.set(0);
+  finalComposer.render();
 
-      // 平滑过渡
-      mix = damp(mix, targetMix, 3.0, dt);
-      targetFocus = (mode === Mode.FOCUS) ? 1 : 0;
-      focus = damp(focus, targetFocus, 4.2, dt);
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
 
-      // uniforms
-      uniforms.uTime.value = perfTime;
-      uniforms.uMix.value = mix;
-      uniforms.uFocus.value = focus;
+function smoothstep(a,b,t){
+  t = clamp((t-a)/(b-a), 0, 1);
+  return t*t*(3.0-2.0*t);
+}
 
-      starMat.uniforms.uTime.value = perfTime;
+/* ---------------------------
+   Resize
+--------------------------- */
+function onResize(){
+  const w=window.innerWidth, h=window.innerHeight;
+  camera.aspect=w/h;
+  camera.updateProjectionMatrix();
+  renderer.setPixelRatio(Math.min(DPR_CAP, window.devicePixelRatio||1));
+  renderer.setSize(w,h,false);
+  bloomComposer.setSize(w,h);
+  finalComposer.setSize(w,h);
+  bloomPass.setSize?.(w,h);
+}
+window.addEventListener("resize", onResize);
 
-      // 视频态：减少 Bloom 混合以避免“糊一片”（保持高级感）
-      bloomMixPass.material.uniforms.uBloomIntensity.value = lerp(1.0, 0.34, focus);
-
-      // 相机
-      applyCamera(dt);
-
-      // 轻微整体摆动（让成语更“活”）
-      const swing = (1.0 - mix) * 0.12;
-      group.rotation.y = Math.sin(perfTime * 0.45) * swing;
-      group.rotation.x = Math.sin(perfTime * 0.33) * swing * 0.45;
-
-      // 氛围
-      updateMood(dt);
-
-      // 渲染：选择性 Bloom
-      camera.layers.set(BLOOM_LAYER);
-      bloomComposer.render();
-
-      camera.layers.set(0);
-      finalComposer.render();
-
-      requestAnimationFrame(animate);
-    }
-    requestAnimationFrame(animate);
-
-    // ---------------------------
-    // Resize
-    // ---------------------------
-    function onResize(){
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-
-      renderer.setPixelRatio(Math.min(DPR_CAP, window.devicePixelRatio || 1));
-      renderer.setSize(w, h, false);
-
-      bloomComposer.setSize(w, h);
-      finalComposer.setSize(w, h);
-      bloomPass.setSize?.(w, h);
-    }
-    window.addEventListener("resize", onResize);
-
-    // ---------------------------
-    // 初始提示
-    // ---------------------------
-    toast("欢迎：握拳合拢成语，张开散开漂浮，三指抓进入视频放大态。", 2400);
-
-    // 可选：页面首次进入时，预加载一次视频（不自动播放）
-    if (HORSE_VIDEOS[0]) {
-      horseVid.src = HORSE_VIDEOS[0];
-      horseVid.load();
-      horseVid.muted = true;
-      horseVid.loop = true;
-      horseVid.playsInline = true;
-    }
-  </script>
+// initial hint
+statusText.textContent = "点击“启用手势”开始。握拳：合拢成语；张开：散开漂浮；三指抓：抓红包开封。";
+</script>
 </body>
 </html>
