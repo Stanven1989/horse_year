@@ -408,7 +408,6 @@ const IDIOMS = [
   "马上有钱","马上有房","马上有对象","马力全开"
 ];
 
-// 你需要在仓库里准备这些视频（assets/videos/ 下）
 const HORSE_VIDEOS = [
   "assets/videos/horse1.mp4",
   "assets/videos/horse2.mp4",
@@ -424,14 +423,6 @@ const lerp  = (a,b,t)=>a+(b-a)*t;
 const damp = (current, target, lambda, dt) => {
   const t = 1 - Math.exp(-lambda * dt);
   return current + (target - current) * t;
-};
-
-/**
- * ✅ 关键修复：用 ENV 对象承载可变“环境参数”，避免 let/const TDZ。
- * rebuildIdiomTargets 里随时可以更新 ENV.homeRingR，而不会触发 “before initialization”。
- */
-const ENV = {
-  homeRingR: 3.2
 };
 
 const canvas = document.getElementById("gl");
@@ -532,7 +523,7 @@ finalComposer.addPass(bloomMixPass);
 finalComposer.addPass(new OutputPass());
 
 // ---------------------------
-// 生成 “马” 字粒子纹理（用作点精灵）
+// 生成 “马” 字粒子纹理
 // ---------------------------
 function makeMaGlyphTexture(){
   const c = document.createElement("canvas");
@@ -672,6 +663,11 @@ const idiomGroup = new THREE.Group();
 idiomGroup.position.set(0, 2.25, 0);
 scene.add(idiomGroup);
 
+/**
+ * ✅ 关键修复：提前声明，避免 rebuildIdiomTargets() 在红包模块初始化前写入时报 TDZ
+ */
+let envHomeRingR = 3.2;
+
 let currentIdiom = "";
 let idiomCount = 0;
 
@@ -721,12 +717,10 @@ function rebuildIdiomTargets(text){
   idiomGeo.setDrawRange(0, MAX_PARTICLES);
   idiomGeo.attributes.aTar.needsUpdate = true;
 
-  // ✅ 修复：更新 ENV.homeRingR，不再引用未初始化的 envHomeRingR
   idiomGeo.computeBoundingSphere();
-  ENV.homeRingR = Math.max(2.6, Math.min(5.2, (idiomGeo.boundingSphere?.radius || 3.4) * 1.10));
+  envHomeRingR = Math.max(2.6, Math.min(5.2, (idiomGeo.boundingSphere?.radius || 3.4) * 1.10));
 }
 
-// “马”粒子材质
 const idiomMat = new THREE.ShaderMaterial({
   transparent: true,
   depthWrite: false,
@@ -752,6 +746,7 @@ const idiomMat = new THREE.ShaderMaterial({
       vec3 p = position;
 
       float t = uTime*(0.7 + aSeed*1.3);
+
       p.x += cos(t + aSeed*12.0) * (0.02 + aSeed*0.05);
       p.y += sin(t*0.9 + aSeed*10.0) * (0.03 + aSeed*0.06);
       p.z += sin(t*1.1 + aSeed* 8.0) * (0.02 + aSeed*0.05);
@@ -798,16 +793,17 @@ const idiomPoints = new THREE.Points(idiomGeo, idiomMat);
 idiomGroup.add(idiomPoints);
 idiomPoints.layers.enable(BLOOM_LAYER);
 
-// 初始随机成语（此时 ENV 已初始化，不会再触发 TDZ）
 rebuildIdiomTargets(IDIOMS[Math.floor(Math.random()*IDIOMS.length)]);
 
 // ---------------------------
-// 红包系统：合拢时环绕分布；散开时惯性爆散
+// 红包系统
 // ---------------------------
 const ENVELOPES = IS_MOBILE ? 160 : 240;
 const envGroup = new THREE.Group();
 idiomGroup.add(envGroup);
 envGroup.position.set(0,0,0);
+
+// ✅ 删除了这里原本的：let envHomeRingR = 3.2;（因为已提前声明）
 
 function makeRedEnvelopeTexture(){
   const c = document.createElement("canvas");
@@ -876,8 +872,7 @@ const envSeed = new Array(ENVELOPES);
 
 function sampleEnvelopeHomeLocal(){
   const ang = Math.random() * Math.PI * 2;
-  // ✅ 修复：使用 ENV.homeRingR
-  const r = ENV.homeRingR * (0.75 + Math.random() * 0.55);
+  const r = envHomeRingR * (0.75 + Math.random() * 0.55);
   const y = (Math.random()-0.5) * 1.9;
   const z = (Math.random()-0.5) * 1.5;
   return new THREE.Vector3(Math.cos(ang)*r, y, z);
@@ -1119,11 +1114,6 @@ class Fireworks {
       this.pos[i*3+0] += this.vel[i*3+0]*dt;
       this.pos[i*3+1] += this.vel[i*3+1]*dt;
       this.pos[i*3+2] += this.vel[i*3+2]*dt;
-
-      const fade = 1.0 - smoothstep(0.55, 1.0, t);
-      this.col[i*3+0] *= (0.998 + fade*0.002);
-      this.col[i*3+1] *= (0.998 + fade*0.002);
-      this.col[i*3+2] *= (0.998 + fade*0.002);
     }
 
     this.geo.attributes.position.needsUpdate = true;
@@ -1134,7 +1124,7 @@ class Fireworks {
 const fireworks = new Fireworks(IS_MOBILE ? 5200 : 7800);
 
 // ---------------------------
-// 相机控制（手掌移动旋转）
+// 相机控制
 // ---------------------------
 let yaw=0.0, pitch=0.14, radius=10.4;
 let yawT=yaw, pitchT=pitch;
@@ -1164,7 +1154,7 @@ canvas.addEventListener("click", ()=>{
 });
 
 // ---------------------------
-// 红包开封流程（焦点态）
+// 红包开封流程
 // ---------------------------
 function pickIdiom(){
   return IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
@@ -1451,17 +1441,13 @@ function updateMood(dt){
   }
 }
 
-let lastLandmarks = null; // 防止某些浏览器提升作用域后引用不清晰（冗余兜底）
 function animate(){
   const now=performance.now();
   const dt=clamp((now-lastTime)/1000, 0, 0.035);
   lastTime=now;
   time += dt;
 
-  if(handEnabled && window.lastLandmarks && (now-window.lastLandmarksTs) < 180){
-    const g = computeGesture(window.lastLandmarks);
-    handleGesture(g, dt);
-  }else if(handEnabled && typeof lastLandmarksTs !== "undefined" && lastLandmarks && (now-lastLandmarksTs) < 180){
+  if(handEnabled && lastLandmarks && (now-lastLandmarksTs) < 180){
     const g = computeGesture(lastLandmarks);
     handleGesture(g, dt);
   }
@@ -1503,7 +1489,7 @@ function onResize(){
 window.addEventListener("resize", onResize);
 
 // ---------------------------
-// 初始提示 & 初始化红包
+// 初始提示
 // ---------------------------
 statusText.textContent = "已加载：握拳合拢 / 张开散开 / 捏合抓红包（建议点击“启用手势识别”）";
 
@@ -1512,20 +1498,6 @@ for(let i=0;i<ENVELOPES;i++) envHomeLocal[i] = sampleEnvelopeHomeLocal();
 horseVideo.muted = true;
 horseVideo.loop = true;
 horseVideo.playsInline = true;
-
-// ---------------------------
-// ✅ 修复手势结果写入：保持与你原代码一致（避免引用缺失）
-// ---------------------------
-let lastLandmarksTs = 0;
-let lastLandmarksLocal = null;
-Object.defineProperty(window, "lastLandmarks", {
-  get(){ return lastLandmarksLocal; },
-  set(v){ lastLandmarksLocal = v; }
-});
-Object.defineProperty(window, "lastLandmarksTs", {
-  get(){ return lastLandmarksTs; },
-  set(v){ lastLandmarksTs = v; }
-});
 </script>
 </body>
 </html>
