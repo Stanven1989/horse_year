@@ -353,7 +353,7 @@
       </div>
 
       <div class="tips" id="tips" style="display:none;">
-        <span class="chip"><b>五指握拳</b> → 收拢凝聚（稳定成语）</span>
+        <span class="chip"><b>五指握拳</b> → 收拢凝聚（平滑过渡）</span>
         <span class="chip"><b>张开五指</b> → 散开态（爆散+漂浮）</span>
         <span class="chip"><b>三指捏合</b>（拇指+食指+中指） → 抓红包 → 开封 → 播放视频</span>
         <span class="chip"><b>散开态移动手掌</b> → 旋转视角</span>
@@ -636,6 +636,7 @@ function setMode(next){
   mode = next;
 
   if(mode === Mode.MERGE){
+    // ✅ 只设置目标，不强行改 mix，保证散开->凝聚有丝滑过渡
     targetMix = 0;
     targetFocus = 0;
     hideFocusOverlay();
@@ -655,7 +656,7 @@ function showFocusOverlay(){ focusOverlay.classList.add("show"); }
 function hideFocusOverlay(){ focusOverlay.classList.remove("show"); packetEl.classList.remove("open"); }
 
 // ---------------------------
-// 成语粒子系统（稳定）
+// 成语粒子系统（稳定 + 凝聚态绕Y轴旋转）
 // ---------------------------
 const idiomGroup = new THREE.Group();
 idiomGroup.position.set(0, 2.25, 0);
@@ -691,23 +692,11 @@ for(let i=0;i<MAX_PARTICLES;i++){
 
 let idiomBounds = { minX:-3, maxX:3, minY:-1.5, maxY:1.5 };
 
-function resetIdiomToTargets(jitter=0.04){
-  for(let i=0;i<MAX_PARTICLES;i++){
-    const tx=aTar[i*3+0], ty=aTar[i*3+1], tz=aTar[i*3+2];
-    aPos[i*3+0]=tx + (Math.random()-0.5)*jitter;
-    aPos[i*3+1]=ty + (Math.random()-0.5)*jitter;
-    aPos[i*3+2]=tz + (Math.random()-0.5)*jitter;
-    aVel[i*3+0]=0; aVel[i*3+1]=0; aVel[i*3+2]=0;
-  }
-  idiomGeo.attributes.position.needsUpdate = true;
-  idiomGeo.attributes.aVel.needsUpdate = true;
-}
-
 function randn(){
   return (Math.random()+Math.random()+Math.random()+Math.random()-2.0);
 }
 
-function rebuildIdiomTargets(text){
+function rebuildIdiomTargets(text, { snap=false } = {}){
   currentIdiom = text;
 
   const pts = sampleTextPoints(text, {
@@ -741,12 +730,21 @@ function rebuildIdiomTargets(text){
     const z = randn() * (thickness * 0.22);
     const z2 = randn() * (thickness * 0.14);
     aTar[i*3+2] = (z + z2);
+
+    if(snap){
+      aPos[i*3+0] = aTar[i*3+0] + (Math.random()-0.5)*0.03;
+      aPos[i*3+1] = aTar[i*3+1] + (Math.random()-0.5)*0.03;
+      aPos[i*3+2] = aTar[i*3+2] + (Math.random()-0.5)*0.03;
+      aVel[i*3+0]=0; aVel[i*3+1]=0; aVel[i*3+2]=0;
+    }
   }
 
   idiomGeo.setDrawRange(0, MAX_PARTICLES);
   idiomGeo.attributes.aTar.needsUpdate = true;
-
-  resetIdiomToTargets(0.038);
+  if(snap){
+    idiomGeo.attributes.position.needsUpdate = true;
+    idiomGeo.attributes.aVel.needsUpdate = true;
+  }
 }
 
 const idiomMat = new THREE.ShaderMaterial({
@@ -814,11 +812,11 @@ const idiomPoints = new THREE.Points(idiomGeo, idiomMat);
 idiomGroup.add(idiomPoints);
 idiomPoints.layers.enable(BLOOM_LAYER);
 
-// 初始固定一个成语
-rebuildIdiomTargets(IDIOMS[Math.floor(Math.random()*IDIOMS.length)]);
+// 初始固定一个成语（首次可 snap）
+rebuildIdiomTargets(IDIOMS[Math.floor(Math.random()*IDIOMS.length)], { snap:true });
 
 // ---------------------------
-// 红包系统（缩小+大小不一+稳定漂浮）
+// 红包系统（缩小+大小不一 + 凝聚态布朗运动）
 // ---------------------------
 const ENVELOPES = IS_MOBILE ? 190 : 300;
 
@@ -893,6 +891,10 @@ const envVel = new Array(ENVELOPES);
 const envScale = new Array(ENVELOPES);
 const envSeed = new Array(ENVELOPES);
 
+// ✅ 凝聚态“布朗运动”偏移与速度（围绕 home 轻微随机游走 + 轻回弹）
+const envBrown = new Array(ENVELOPES);
+const envBrownVel = new Array(ENVELOPES);
+
 function recomputeEnvHomeRadius(){
   const w = Math.max(3.4, (idiomBounds.maxX - idiomBounds.minX));
   const h = Math.max(1.8, (idiomBounds.maxY - idiomBounds.minY));
@@ -926,28 +928,73 @@ for(let i=0;i<ENVELOPES;i++){
   envHome[i] = sampleEnvelopeHomeWorld();
   envScatter[i] = sampleScatterWorld();
   envVel[i] = new THREE.Vector3(0,0,0);
+
+  // ✅ 大小不一（已经是“缩小一倍”的基准面片，再按 scale 放大缩小）
   envScale[i] = lerp(0.55, 2.20, Math.pow(Math.random(), 0.72));
+
   envSeed[i] = Math.random()*1000;
+
+  envBrown[i] = new THREE.Vector3(0,0,0);
+  envBrownVel[i] = new THREE.Vector3(0,0,0);
 }
 
 const _obj = new THREE.Object3D();
 
 function updateEnvelopes(time, dt){
+  // ✅ 凝聚态布朗运动参数（慢速、稳定）
+  const brownAcc = 0.38;     // 随机加速度强度
+  const brownDrag = 2.2;     // 阻尼
+  const brownSpring = 1.6;   // 回弹（保持围绕 home）
+  const brownMax = 0.55;     // 偏移最大幅度
+
   for(let i=0;i<ENVELOPES;i++){
     const seed = envSeed[i];
 
+    // ---------- MERGE: 布朗运动（围绕 home） ----------
+    // mix 越接近 0，越偏向凝聚态的“稳定随机游走”
+    const mergeK = (1.0 - mix);
+    if(mergeK > 0.02){
+      const b = envBrown[i];
+      const bv = envBrownVel[i];
+
+      // 低频随机力（用正弦当连续噪声，避免抖动）
+      const nx = Math.sin(time*0.55 + seed*1.1) + Math.sin(time*0.31 + seed*2.3)*0.6;
+      const ny = Math.cos(time*0.48 + seed*1.7) + Math.sin(time*0.29 + seed*3.1)*0.6;
+      const nz = Math.sin(time*0.52 + seed*2.0) + Math.cos(time*0.33 + seed*2.9)*0.6;
+
+      bv.x += nx * brownAcc * mergeK * dt;
+      bv.y += ny * brownAcc * 0.75 * mergeK * dt;
+      bv.z += nz * brownAcc * mergeK * dt;
+
+      // 回弹到 0 偏移
+      bv.x += (-b.x) * brownSpring * mergeK * dt;
+      bv.y += (-b.y) * brownSpring * mergeK * dt;
+      bv.z += (-b.z) * brownSpring * mergeK * dt;
+
+      // 阻尼
+      const d = Math.exp(-brownDrag * dt);
+      bv.multiplyScalar(d);
+
+      // 积分 + 限幅
+      b.addScaledVector(bv, dt);
+      if(b.length() > brownMax){
+        b.normalize().multiplyScalar(brownMax);
+        bv.multiplyScalar(0.35);
+      }
+    }
+
     const home = envHome[i];
-    const wobY = Math.sin(time*(0.55 + (seed%1.0)*0.8) + seed) * 0.05;
-    const wobZ = Math.cos(time*(0.45 + (seed%1.0)*0.7) + seed) * 0.03;
+    const b = envBrown[i];
 
-    const hx = home.x;
-    const hy = home.y + wobY;
-    const hz = home.z + wobZ;
+    const hx = home.x + b.x;
+    const hy = home.y + b.y;
+    const hz = home.z + b.z;
 
+    // ---------- SCATTER: 远场漂浮 ----------
     const s = envScatter[i];
     const v = envVel[i];
-    v.multiplyScalar(Math.pow(0.94, dt*60.0));
 
+    v.multiplyScalar(Math.pow(0.94, dt*60.0));
     if(mix > 0.35){
       const n1 = Math.sin(time*0.7 + seed*0.9);
       const n2 = Math.cos(time*0.65 + seed*1.1);
@@ -973,6 +1020,7 @@ function updateEnvelopes(time, dt){
 }
 
 function kickScatterImpulse(){
+  // 成语粒子爆散
   for(let i=0;i<MAX_PARTICLES;i++){
     const sx = (Math.random()-0.5);
     const sy = (Math.random()-0.2);
@@ -985,6 +1033,7 @@ function kickScatterImpulse(){
   }
   idiomGeo.attributes.aVel.needsUpdate = true;
 
+  // 红包远场飞散
   for(let i=0;i<ENVELOPES;i++){
     const p = envScatter[i];
     const dir = p.clone().normalize();
@@ -998,7 +1047,7 @@ function kickScatterImpulse(){
 }
 
 // ---------------------------
-// 背景烟花（保持自然小粒子）
+// 背景烟花（略：保留上一版）
 // ---------------------------
 function smoothstep(a,b,x){
   const t = clamp((x-a)/(b-a), 0, 1);
@@ -1280,9 +1329,8 @@ async function triggerRedPacketFlow(){
 
 // ---------------------------
 // 手势识别（MediaPipe Hands）
-// ✅ 明确：
-//   - 五指握拳 = 收拢凝聚成语
-//   - 三指捏合(拇指+食指+中指) = 抓红包
+// ✅ 五指握拳：凝聚（平滑过渡，不瞬切）
+// ✅ 三指捏合：抓红包
 // ---------------------------
 let hands = null;
 let handEnabled = false;
@@ -1296,7 +1344,7 @@ function dist3(a,b){
 
 function computeGesture(landmarks){
   const wrist=landmarks[0];
-  const handSize=Math.max(1e-6, dist3(wrist, landmarks[9])); // wrist->middle_mcp
+  const handSize=Math.max(1e-6, dist3(wrist, landmarks[9]));
 
   function extended(tip,pip){
     const dt=dist3(landmarks[tip], wrist);
@@ -1312,24 +1360,16 @@ function computeGesture(landmarks){
 
   const extCount = [thumbExt,indexExt,middleExt,ringExt,pinkyExt].filter(Boolean).length;
 
-  // ✅ 五指握拳：extCount 很低（更严格一点避免误判）
   const fist = (extCount <= 1);
 
-  // ✅ 三指捏合（拇指+食指+中指）：
-  // 1) 三个指尖彼此距离都很近（相对 handSize）
-  // 2) 同时“不是握拳”（防止握拳时也触发抓红包）
   const th = landmarks[4], ix = landmarks[8], md = landmarks[12];
   const dTI = dist3(th, ix) / handSize;
   const dTM = dist3(th, md) / handSize;
   const dIM = dist3(ix, md) / handSize;
-
-  // 阈值经验值：手机/桌面通用，偏保守，避免误触
   const threePinch = (!fist) && (dTI < 0.40) && (dTM < 0.44) && (dIM < 0.40);
 
-  // 张开手：多数手指伸直
   const openHand = (extCount >= 4);
 
-  // palm 用于散开态旋转视角
   const palmIdx=[0,5,9,13,17];
   const palm={x:0,y:0,z:0};
   for(const i of palmIdx){ palm.x+=landmarks[i].x; palm.y+=landmarks[i].y; palm.z+=landmarks[i].z; }
@@ -1340,34 +1380,24 @@ function computeGesture(landmarks){
 
 let lastPalmX=null, lastPalmY=null;
 
-// 边沿触发：避免“持续握拳/持续捏合”每帧触发
 let prevOpen=false, prevFist=false, prevThreePinch=false;
-
-// 抓红包节流
 let pinchCooldown=0;
 
 function handleGesture(g, dt){
-  // 优先级：握拳（凝聚） > 张开（散开） > 三指捏合（抓红包）
-  // 这样“收拢凝聚”时不会误触发抓红包
   if(g.fist && !prevFist){
     const newIdiom = pickIdiom();
-    rebuildIdiomTargets(newIdiom);
+
+    // ✅ 更新目标，但不 snap，不瞬移：让粒子“从散开慢慢聚拢”
+    rebuildIdiomTargets(newIdiom, { snap:false });
     recomputeEnvHomeRadius();
 
-    for(let i=0;i<ENVELOPES;i++){
-      envHome[i] = sampleEnvelopeHomeWorld();
-      envScatter[i] = sampleScatterWorld();
-      envVel[i].set(0,0,0);
-    }
-
     setMode(Mode.MERGE);
-    mix = 0; targetMix = 0;
-    statusText.textContent = `合拢稳定态：${newIdiom}`;
+
+    statusText.textContent = `收拢中 → 凝聚：${newIdiom}`;
   }else if(g.openHand && !prevOpen){
     setMode(Mode.SCATTER);
     statusText.textContent = "散开态：手掌移动可旋转视角";
   }else{
-    // 三指捏合：仅在非握拳、非张开，且边沿触发时抓红包
     pinchCooldown = Math.max(0, pinchCooldown - dt);
     if(g.threePinch && !prevThreePinch && pinchCooldown<=0 && !g.fist && !g.openHand){
       triggerRedPacketFlow();
@@ -1375,7 +1405,6 @@ function handleGesture(g, dt){
     }
   }
 
-  // 散开态：手掌移动控制镜头（仅在非握拳、非捏合）
   if(mode===Mode.SCATTER && !g.fist && !g.threePinch){
     const x=g.palm.x, y=g.palm.y;
     if(lastPalmX!=null){
@@ -1431,7 +1460,7 @@ async function startHands(){
 
   handEnabled=true;
   led.classList.add("on");
-  statusText.textContent="手势已启用：五指握拳=凝聚 / 张开=散开 / 三指捏合=抓红包";
+  statusText.textContent="手势已启用：握拳=凝聚(平滑) / 张开=散开 / 三指捏合=抓红包";
 
   let busy=false, lastSent=0;
   async function pump(){
@@ -1466,20 +1495,21 @@ btnHelp.addEventListener("click", ()=>{
 
 btnReset.addEventListener("click", ()=>{
   const newIdiom = pickIdiom();
-  rebuildIdiomTargets(newIdiom);
+  rebuildIdiomTargets(newIdiom, { snap:true });
   recomputeEnvHomeRadius();
 
   for(let i=0;i<ENVELOPES;i++){
     envHome[i]=sampleEnvelopeHomeWorld();
     envScatter[i]=sampleScatterWorld();
     envVel[i].set(0,0,0);
+    envBrown[i].set(0,0,0);
+    envBrownVel[i].set(0,0,0);
   }
 
   hideFocusOverlay();
   setMode(Mode.MERGE);
   mix = 0; targetMix = 0;
 
-  // 同时清空边沿状态，避免刚重置后一瞬间误触发
   prevOpen = prevFist = prevThreePinch = false;
   pinchCooldown = 0;
 
@@ -1521,7 +1551,10 @@ function applyCamera(dt){
 }
 
 function updateIdiom(dt){
-  const rotSpeed = (mode===Mode.SCATTER) ? 0.22 : 0.0;
+  // ✅ 凝聚态也绕Y轴旋转（更明显一点），散开态更轻
+  const rotSpeed =
+    (mode===Mode.MERGE)  ? 0.22 :
+    (mode===Mode.SCATTER)? 0.12 : 0.0;
   idiomGroup.rotation.y += dt * rotSpeed;
 
   const spring = 18.0;
@@ -1593,7 +1626,10 @@ function animate(){
     handleGesture(g, dt);
   }
 
-  mix = damp(mix, targetMix, 2.4, dt);
+  // ✅ 让散开->凝聚过渡更“丝滑”：凝聚速度略慢一点
+  const mixLambda = (targetMix < mix) ? 1.65 : 2.4;
+  mix = damp(mix, targetMix, mixLambda, dt);
+
   targetFocus = (mode===Mode.FOCUS) ? 1 : 0;
   focus = damp(focus, targetFocus, 4.0, dt);
 
@@ -1633,12 +1669,6 @@ window.addEventListener("resize", onResize);
 // 初始提示 & 初始红包
 // ---------------------------
 statusText.textContent = `已加载：合拢稳定态：${currentIdiom}（可点击“启用手势识别”）`;
-
-recomputeEnvHomeRadius();
-for(let i=0;i<ENVELOPES;i++){
-  envHome[i] = sampleEnvelopeHomeWorld();
-  envScatter[i] = sampleScatterWorld();
-}
 
 horseVideo.muted = true;
 horseVideo.loop = true;
