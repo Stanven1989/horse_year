@@ -6,7 +6,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>马年祝福 · 手势粒子成语 · 红包开封 · 烟花背景</title>
 
-  <!-- ES Module Shims (Import Maps) -->
   <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -27,7 +26,6 @@
   }
   </script>
 
-  <!-- MediaPipe Hands -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
 
   <style>
@@ -89,7 +87,7 @@
     .panel{
       pointer-events:auto;
       flex:1 1 auto;
-      max-width:920px;
+      max-width:940px;
       padding:12px 12px 10px;
       border:1px solid var(--line);
       border-radius:14px;
@@ -190,14 +188,6 @@
       position:relative;
       overflow:hidden;
     }
-    .focusCard:before{
-      content:"";
-      position:absolute; inset:-2px;
-      background:
-        radial-gradient(80% 120% at 25% 0%, rgba(212,175,55,.18), rgba(0,0,0,0) 60%),
-        radial-gradient(80% 120% at 75% 0%, rgba(177,18,38,.16), rgba(0,0,0,0) 60%);
-      pointer-events:none;
-    }
     .focusTop{
       display:flex;
       gap:12px;
@@ -215,14 +205,6 @@
       position:relative;
       overflow:hidden;
       transform-origin: 50% 0%;
-    }
-    .packet:before{
-      content:"";
-      position:absolute; inset:-20%;
-      background:
-        radial-gradient(45% 70% at 30% 20%, rgba(212,175,55,.22), rgba(0,0,0,0) 60%),
-        radial-gradient(45% 70% at 80% 70%, rgba(212,175,55,.15), rgba(0,0,0,0) 60%);
-      pointer-events:none;
     }
     .packet .seal{
       position:absolute;
@@ -242,34 +224,12 @@
       transform-origin: 50% 100%;
       transform: rotateX(0deg);
     }
-    .packet.open .lid{
-      animation: openLid .55s ease forwards;
-    }
-    @keyframes openLid{
-      0%{ transform: rotateX(0deg); }
-      100%{ transform: rotateX(-125deg); }
-    }
+    .packet.open .lid{ animation: openLid .55s ease forwards; }
+    @keyframes openLid{ 0%{ transform: rotateX(0deg); } 100%{ transform: rotateX(-125deg); } }
 
-    .focusTextWrap{
-      flex:1 1 320px;
-      min-width: 260px;
-    }
-    .focusTitle{
-      margin:0;
-      font-size:15px;
-      letter-spacing:.5px;
-      position:relative;
-      font-weight:900;
-    }
-    .focusLine{
-      margin:8px 0 0;
-      font-size:14px;
-      line-height:1.6;
-      color: rgba(255,255,255,.88);
-      position:relative;
-      white-space:pre-wrap;
-      text-shadow: 0 0 18px rgba(212,175,55,.12);
-    }
+    .focusTextWrap{ flex:1 1 320px; min-width: 260px; }
+    .focusTitle{ margin:0; font-size:15px; letter-spacing:.5px; font-weight:900; }
+    .focusLine{ margin:8px 0 0; font-size:14px; line-height:1.6; color: rgba(255,255,255,.88); white-space:pre-wrap; }
 
     .videoWrap{
       margin-top:12px;
@@ -279,30 +239,7 @@
       position:relative;
       box-shadow: 0 16px 46px rgba(0,0,0,.55);
     }
-    .videoWrap video{
-      width:100%;
-      height:auto;
-      display:block;
-      background:#000;
-    }
-
-    .small{
-      margin-top:10px;
-      font-size:12px;
-      color: rgba(255,255,255,.65);
-      position:relative;
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
-    }
-    .kbd{
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      border-radius:10px;
-      padding:6px 10px;
-    }
+    .videoWrap video{ width:100%; height:auto; display:block; background:#000; }
 
     video#cam{
       position:absolute;
@@ -311,14 +248,6 @@
       opacity:0;
       pointer-events:none;
       transform: translateZ(0);
-    }
-
-    @media (max-width:420px){
-      .brand{ min-width: 240px; }
-      .panel{ padding:10px; }
-      button{ padding:9px 10px; }
-      .tips{ gap:8px; }
-      .packet{ width:130px; height:168px; }
     }
   </style>
 </head>
@@ -336,7 +265,7 @@
           <span class="badge"></span>
           <div>
             <div class="title">马年祝福 · 手势粒子成语 · 红包开封 · 烟花背景</div>
-            <div class="subtitle">Three.js / WebGL · MediaPipe Hands · 辉光后期</div>
+            <div class="subtitle">Three.js / WebGL · MediaPipe Hands · Bloom</div>
           </div>
         </div>
 
@@ -353,11 +282,11 @@
       </div>
 
       <div class="tips" id="tips" style="display:none;">
-        <span class="chip"><b>五指握拳</b> → 收拢凝聚（平滑过渡）</span>
-        <span class="chip"><b>张开五指</b> → 散开态（马形粒子 + 银河环绕）</span>
+        <span class="chip"><b>五指握拳</b> → 收拢凝聚（平滑过渡，稳定成语）</span>
+        <span class="chip"><b>张开五指</b> → 散开态（雄武奔跑马 + 银河粒子环绕）</span>
         <span class="chip"><b>三指捏合</b>（拇指+食指+中指） → 抓红包 → 开封 → 播放视频</span>
         <span class="chip"><b>散开态移动手掌</b> → 旋转视角</span>
-        <span class="chip"><b>双击画面</b> → 触发开封（无手势备选）</span>
+        <span class="chip"><b>双击画面</b> → 触发开封（备选）</span>
       </div>
     </div>
   </div>
@@ -370,19 +299,13 @@
           <div class="seal"></div>
         </div>
         <div class="focusTextWrap">
-          <h3 id="focusTitle" class="focusTitle">恭喜发财</h3>
+          <h3 id="focusTitle" class="focusTitle">红包到 · 好运到</h3>
           <div id="focusText" class="focusLine"></div>
         </div>
       </div>
 
       <div class="videoWrap">
         <video id="horseVideo" playsinline muted loop></video>
-      </div>
-
-      <div class="small">
-        <span class="kbd">五指握拳：凝聚成语</span>
-        <span class="kbd">张开：马形+银河</span>
-        <span class="kbd">三指捏合：抓红包</span>
       </div>
     </div>
   </div>
@@ -402,8 +325,7 @@ const IDIOMS = [
   "马到成功","龙马精神","一马当先","万马奔腾","马上发财","马上如意",
   "策马扬鞭","快马加鞭","一马平川","天马行空","马到功成","马跃钱程",
   "人强马壮","金戈铁马","骏马奔腾","马蹄生风",
-  "马年大吉","马年行大运","马年祥瑞","金马迎春","宝马香车",
-  "马到财来","马到福来","马到运来"
+  "马年大吉","马年行大运","马年祥瑞","金马迎春","马到财来"
 ];
 
 const HORSE_VIDEOS = [
@@ -422,6 +344,7 @@ const damp = (current, target, lambda, dt) => {
   const t = 1 - Math.exp(-lambda * dt);
   return current + (target - current) * t;
 };
+const randn = ()=> (Math.random()+Math.random()+Math.random()+Math.random()-2.0);
 
 const canvas = document.getElementById("gl");
 const statusText = document.getElementById("statusText");
@@ -474,7 +397,7 @@ redPoint.position.set(-2.8, 3.4, 2.6);
 scene.add(redPoint);
 
 // ---------------------------
-// 后期辉光（Bloom）
+// 后期 Bloom
 // ---------------------------
 const BLOOM_LAYER = 1;
 
@@ -521,13 +444,12 @@ finalComposer.addPass(bloomMixPass);
 finalComposer.addPass(new OutputPass());
 
 // ---------------------------
-// 生成 “马” 字粒子纹理
+// 粒子点精灵纹理（“马”字的光形）
 // ---------------------------
 function makeMaGlyphTexture(){
   const c = document.createElement("canvas");
   c.width = 256; c.height = 256;
   const ctx = c.getContext("2d");
-
   ctx.clearRect(0,0,256,256);
 
   const g = ctx.createRadialGradient(128,128,0,128,128,118);
@@ -560,55 +482,8 @@ function makeMaGlyphTexture(){
 const MA_TEX = makeMaGlyphTexture();
 
 // ---------------------------
-// 文字/图形采样 -> 点位
+// 文字采样 -> 成语点位
 // ---------------------------
-function sampleCanvasPoints(drawFn, {
-  step = IS_MOBILE ? 2 : 1,
-  threshold = 10,
-  worldWidth = 7.9,
-  worldHeight = 3.8
-} = {}){
-  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-  const c = document.createElement("canvas");
-  const ctx = c.getContext("2d", { willReadFrequently: true });
-
-  const cssW = 900;
-  const cssH = 360;
-
-  c.width  = Math.ceil(cssW * dpr);
-  c.height = Math.ceil(cssH * dpr);
-
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,cssW,cssH);
-
-  drawFn(ctx, cssW, cssH);
-
-  const img = ctx.getImageData(0,0,c.width,c.height).data;
-  const pts = [];
-  const stepPx = Math.max(1, Math.round(step * dpr));
-
-  for(let y=0;y<c.height;y+=stepPx){
-    for(let x=0;x<c.width;x+=stepPx){
-      const a = img[(y*c.width + x)*4 + 3];
-      if(a > threshold) pts.push([x/dpr, y/dpr]);
-    }
-  }
-
-  const sx = worldWidth / cssW;
-  const sy = worldHeight / cssH;
-
-  const out = new Float32Array(pts.length*3);
-  for(let i=0;i<pts.length;i++){
-    const [xCss,yCss]=pts[i];
-    const px=(xCss - cssW/2)*sx;
-    const py=(cssH/2 - yCss)*sy;
-    out[i*3+0]=px;
-    out[i*3+1]=py;
-    out[i*3+2]=0;
-  }
-  return out;
-}
-
 function sampleTextPoints(text, {
   fontSize = 190,
   step = IS_MOBILE ? 2 : 1,
@@ -666,45 +541,211 @@ function sampleTextPoints(text, {
   return out;
 }
 
-// ✅ 散开态：用“🐎”采样作为奔跑马轮廓（若系统无彩色emoji也会退化为字体替代）
-function sampleRunningHorsePoints(){
-  return sampleCanvasPoints((ctx, W, H)=>{
-    ctx.save();
-    ctx.translate(W/2, H/2);
+// ---------------------------
+// ✅ 程序化生成“雄武奔跑马”的点云（不依赖 emoji / canvas）
+//   - 通过“形状采样”生成：身体/胸/颈/头/尾/鬃/四腿
+//   - 四腿带 partId，渲染循环中做摆动 = “原地奔跑”
+// ---------------------------
+const HorsePart = {
+  BODY:0, HEAD:1, MANE:2, TAIL:3,
+  LEG_FL:4, LEG_FR:5, LEG_BL:6, LEG_BR:7
+};
 
-    // 背后淡淡光晕
-    const g = ctx.createRadialGradient(0,0,10,0,0,260);
-    g.addColorStop(0, "rgba(255,255,255,0.10)");
-    g.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(0,0,260,0,Math.PI*2);
-    ctx.fill();
-
-    // 轮廓：优先 emoji
-    const fontSize = 260;
-    ctx.textAlign="center";
-    ctx.textBaseline="middle";
-    ctx.font = `900 ${fontSize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji", ui-sans-serif, system-ui`;
-    ctx.fillStyle = "rgba(255,255,255,1)";
-    ctx.fillText("🐎", 0, 0);
-
-    // 若 emoji 不明显，加一层“马”做兜底
-    ctx.font = `900 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
-    ctx.globalAlpha = 0.22;
-    ctx.fillText("马", 0, 6);
-
-    ctx.restore();
-  }, {
-    step: IS_MOBILE ? 2 : 1,
-    threshold: 12,
-    worldWidth: IS_MOBILE ? 5.6 : 6.2,
-    worldHeight: IS_MOBILE ? 2.9 : 3.2
-  });
+function inEllipse(x,y,cx,cy,rx,ry){
+  const dx=(x-cx)/rx, dy=(y-cy)/ry;
+  return (dx*dx + dy*dy) <= 1.0;
 }
 
-function randn(){
-  return (Math.random()+Math.random()+Math.random()+Math.random()-2.0);
+function inCapsule(x,y,ax,ay,bx,by,r){
+  // point -> segment distance
+  const abx=bx-ax, aby=by-ay;
+  const apx=x-ax, apy=y-ay;
+  const ab2=abx*abx+aby*aby;
+  const t = ab2>1e-6 ? clamp((apx*abx+apy*aby)/ab2, 0, 1) : 0;
+  const px = ax + abx*t;
+  const py = ay + aby*t;
+  const dx = x-px, dy=y-py;
+  return (dx*dx+dy*dy) <= r*r;
+}
+
+function inTri(x,y,ax,ay,bx,by,cx,cy){
+  // barycentric
+  const v0x=cx-ax, v0y=cy-ay;
+  const v1x=bx-ax, v1y=by-ay;
+  const v2x=x-ax,  v2y=y-ay;
+  const dot00=v0x*v0x+v0y*v0y;
+  const dot01=v0x*v1x+v0y*v1y;
+  const dot02=v0x*v2x+v0y*v2y;
+  const dot11=v1x*v1x+v1y*v1y;
+  const dot12=v1x*v2x+v1y*v2y;
+  const inv = 1.0 / (dot00*dot11 - dot01*dot01 + 1e-9);
+  const u = (dot11*dot02 - dot01*dot12) * inv;
+  const v = (dot00*dot12 - dot01*dot02) * inv;
+  return (u>=0 && v>=0 && (u+v)<=1);
+}
+
+function rotate2D(x,y,ang){
+  const c=Math.cos(ang), s=Math.sin(ang);
+  return [x*c - y*s, x*s + y*c];
+}
+
+function genHorsePointCloud(totalPoints){
+  // 马的局部坐标系：x 右为头，y 上为背
+  // 下面这些参数决定“雄武感”和比例
+  const S = IS_MOBILE ? 0.92 : 1.0;
+  const HX = 0.0, HY = 0.0;
+
+  // 主体
+  const body = { cx:-0.25, cy:0.10, rx:1.55, ry:0.75 };
+  const chest= { cx:0.70,  cy:0.28, rx:0.85, ry:0.78 };
+
+  // 颈部/头
+  const neckA = { cx:1.05, cy:0.70, rx:0.62, ry:0.35, rot:0.35 };
+  const head  = { cx:1.85, cy:0.90, rx:0.50, ry:0.30, rot:-0.08 };
+  const muzzle= { cx:2.20, cy:0.82, rx:0.30, ry:0.20, rot:-0.10 };
+
+  // 鬃毛：上沿条带
+  const maneLine = { ax:1.05, ay:1.05, bx:1.55, by:0.98, r:0.12 };
+
+  // 尾巴：弧形/条带
+  const tailLine1 = { ax:-1.70, ay:0.55, bx:-2.25, by:0.95, r:0.14 };
+  const tailLine2 = { ax:-1.65, ay:0.45, bx:-2.15, by:0.70, r:0.12 };
+
+  // 耳朵：三角
+  const ear1 = { ax:1.90, ay:1.18, bx:2.08, by:1.28, cx:1.98, cy:1.02 };
+  const ear2 = { ax:1.74, ay:1.16, bx:1.88, by:1.28, cx:1.84, cy:1.02 };
+
+  // 四腿（锚点 + 局部段）——稍微夸张，显得“奔跑有力”
+  const leg = {
+    FL: { hip:[0.95,-0.05], knee:[1.05,-0.75], hoof:[1.25,-1.25], r:0.13 },
+    FR: { hip:[0.80, 0.00], knee:[0.65,-0.72], hoof:[0.55,-1.20], r:0.12 },
+    BL: { hip:[-0.65,-0.10], knee:[-0.75,-0.78], hoof:[-0.60,-1.28], r:0.13 },
+    BR: { hip:[-0.85,-0.05], knee:[-1.05,-0.70], hoof:[-1.20,-1.15], r:0.12 }
+  };
+
+  // 采样区域（稍大一点，避免形状空洞）
+  const xMin=-2.6, xMax= 2.45;
+  const yMin=-1.55, yMax= 1.40;
+
+  // 各部分配比（更“雄武”：身体占比高）
+  const weights = [
+    { part:HorsePart.BODY,   w:0.46 },
+    { part:HorsePart.HEAD,   w:0.16 },
+    { part:HorsePart.MANE,   w:0.06 },
+    { part:HorsePart.TAIL,   w:0.06 },
+    { part:HorsePart.LEG_FL, w:0.07 },
+    { part:HorsePart.LEG_FR, w:0.06 },
+    { part:HorsePart.LEG_BL, w:0.07 },
+    { part:HorsePart.LEG_BR, w:0.06 }
+  ];
+  let wsum = 0; for(const it of weights) wsum += it.w;
+  for(const it of weights) it.w /= wsum;
+
+  const ptsX = new Float32Array(totalPoints);
+  const ptsY = new Float32Array(totalPoints);
+  const ptsZ = new Float32Array(totalPoints);
+  const ptsPart = new Uint8Array(totalPoints);
+
+  // 每个点的“局部偏移”（用于腿摆动更真实）
+  const ptsLX = new Float32Array(totalPoints);
+  const ptsLY = new Float32Array(totalPoints);
+
+  function pickPart(){
+    const r = Math.random();
+    let acc = 0;
+    for(const it of weights){
+      acc += it.w;
+      if(r <= acc) return it.part;
+    }
+    return HorsePart.BODY;
+  }
+
+  function accept(part, x, y){
+    if(part === HorsePart.BODY){
+      return inEllipse(x,y, body.cx,body.cy, body.rx,body.ry) || inEllipse(x,y, chest.cx,chest.cy, chest.rx,chest.ry);
+    }
+    if(part === HorsePart.HEAD){
+      const [nx,ny] = rotate2D(x-head.cx, y-head.cy, head.rot);
+      const okH = inEllipse(nx,ny, 0,0, head.rx, head.ry);
+      const [mx,my] = rotate2D(x-muzzle.cx, y-muzzle.cy, muzzle.rot);
+      const okM = inEllipse(mx,my, 0,0, muzzle.rx, muzzle.ry);
+      const okN = (()=>{ const [tx,ty]=rotate2D(x-neckA.cx,y-neckA.cy,neckA.rot); return inEllipse(tx,ty,0,0,neckA.rx,neckA.ry); })();
+      const okE = inTri(x,y, ear1.ax,ear1.ay, ear1.bx,ear1.by, ear1.cx,ear1.cy) || inTri(x,y, ear2.ax,ear2.ay, ear2.bx,ear2.by, ear2.cx,ear2.cy);
+      return okH || okM || okN || okE;
+    }
+    if(part === HorsePart.MANE){
+      return inCapsule(x,y, maneLine.ax,maneLine.ay, maneLine.bx,maneLine.by, maneLine.r);
+    }
+    if(part === HorsePart.TAIL){
+      return inCapsule(x,y, tailLine1.ax,tailLine1.ay, tailLine1.bx,tailLine1.by, tailLine1.r)
+          || inCapsule(x,y, tailLine2.ax,tailLine2.ay, tailLine2.bx,tailLine2.by, tailLine2.r);
+    }
+
+    // legs
+    const L =
+      part===HorsePart.LEG_FL ? leg.FL :
+      part===HorsePart.LEG_FR ? leg.FR :
+      part===HorsePart.LEG_BL ? leg.BL : leg.BR;
+
+    const hip=L.hip, knee=L.knee, hoof=L.hoof;
+    return inCapsule(x,y, hip[0],hip[1], knee[0],knee[1], L.r)
+        || inCapsule(x,y, knee[0],knee[1], hoof[0],hoof[1], L.r*0.95)
+        || inEllipse(x,y, hoof[0],hoof[1], L.r*0.85, L.r*0.55);
+  }
+
+  const thick = IS_MOBILE ? 0.55 : 0.85; // 立体厚度
+  const legLocalJit = IS_MOBILE ? 0.018 : 0.024;
+
+  // rejection sampling
+  for(let i=0;i<totalPoints;i++){
+    const part = pickPart();
+    let x=0, y=0, ok=false;
+
+    // 控制每个点尝试次数
+    for(let k=0;k<120;k++){
+      x = lerp(xMin, xMax, Math.random());
+      y = lerp(yMin, yMax, Math.random());
+
+      // 让轮廓更“硬朗”：边缘加一点抖动（但不至于破形）
+      const jx = randn()*0.012;
+      const jy = randn()*0.010;
+
+      if(accept(part, x+jx, y+jy)){
+        x += jx; y += jy;
+        ok = true;
+        break;
+      }
+    }
+
+    if(!ok){
+      // fallback：塞一个身体点
+      x = body.cx + randn()*0.35;
+      y = body.cy + randn()*0.18;
+    }
+
+    // 统一缩放 + 轻微“前倾姿态”
+    x *= 1.08 * S;
+    y *= 1.08 * S;
+
+    // 前倾：让马更“冲刺”
+    const tilt = -0.08;
+    const [rx,ry] = rotate2D(x, y, tilt);
+
+    ptsX[i] = rx + HX;
+    ptsY[i] = ry + HY;
+    ptsZ[i] = (randn()*0.22 + randn()*0.14) * thick;
+
+    ptsPart[i] = part;
+
+    // 局部点（腿用）：做轻微局部扰动，避免腿呈“直线”
+    ptsLX[i] = rx + randn()*legLocalJit;
+    ptsLY[i] = ry + randn()*legLocalJit;
+  }
+
+  // 另外：为了更雄武，增加“背线/肌肉线”密度（在 body 上沿再补一点点）
+  // 这里不新增数组长度，而是在更新时通过 BODY 的摆动/厚度体现“厚重感”。
+
+  return { ptsX, ptsY, ptsZ, ptsPart, ptsLX, ptsLY };
 }
 
 // ---------------------------
@@ -743,7 +784,7 @@ function showFocusOverlay(){ focusOverlay.classList.add("show"); }
 function hideFocusOverlay(){ focusOverlay.classList.remove("show"); packetEl.classList.remove("open"); }
 
 // ---------------------------
-// 成语粒子系统（MERGE: 成语；SCATTER: 奔跑马 + 银河环绕）
+// 成语/马/银河 粒子系统
 // ---------------------------
 const idiomGroup = new THREE.Group();
 idiomGroup.position.set(0, 2.25, 0);
@@ -752,28 +793,30 @@ scene.add(idiomGroup);
 let currentIdiom = "";
 let idiomBounds = { minX:-3, maxX:3, minY:-1.5, maxY:1.5 };
 
-const MAX_PARTICLES = IS_MOBILE ? 24000 : 38000;
+const MAX_PARTICLES = IS_MOBILE ? 26000 : 42000;
 
-// ✅ 散开态分配：多少比例变成“马”
-const HORSE_RATIO = 0.32; // 0.28~0.38 都可
+// 散开态：马形粒子比例（越大马越“雄武”）
+const HORSE_RATIO = 0.42;
 
 const idiomGeo = new THREE.BufferGeometry();
 
 const aPos   = new Float32Array(MAX_PARTICLES*3);
 const aVel   = new Float32Array(MAX_PARTICLES*3);
-const aTar   = new Float32Array(MAX_PARTICLES*3);       // MERGE（成语）目标
-const aTarH  = new Float32Array(MAX_PARTICLES*3);       // SCATTER（马形）目标，仅对马组有效
+const aTar   = new Float32Array(MAX_PARTICLES*3);
 const aSeed  = new Float32Array(MAX_PARTICLES);
-const aKind  = new Float32Array(MAX_PARTICLES);         // 0=horse, 1=galaxy
-const aOrbR  = new Float32Array(MAX_PARTICLES);         // galaxy orbit radius
-const aOrbA  = new Float32Array(MAX_PARTICLES);         // galaxy base angle
-const aOrbY  = new Float32Array(MAX_PARTICLES);         // galaxy height
-const aOrbS  = new Float32Array(MAX_PARTICLES);         // galaxy angular speed
+
+const aKind  = new Float32Array(MAX_PARTICLES); // 0=horse, 1=galaxy
+const aOrbR  = new Float32Array(MAX_PARTICLES);
+const aOrbA  = new Float32Array(MAX_PARTICLES);
+const aOrbY  = new Float32Array(MAX_PARTICLES);
+const aOrbS  = new Float32Array(MAX_PARTICLES);
+
+// JS 侧：马粒子映射到“马点云”的 index
+const horseRef = new Uint32Array(MAX_PARTICLES);
 
 idiomGeo.setAttribute("position", new THREE.BufferAttribute(aPos, 3));
 idiomGeo.setAttribute("aVel", new THREE.BufferAttribute(aVel, 3));
 idiomGeo.setAttribute("aTar", new THREE.BufferAttribute(aTar, 3));
-idiomGeo.setAttribute("aTarH", new THREE.BufferAttribute(aTarH, 3));
 idiomGeo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed, 1));
 idiomGeo.setAttribute("aKind", new THREE.BufferAttribute(aKind, 1));
 idiomGeo.setAttribute("aOrbR", new THREE.BufferAttribute(aOrbR, 1));
@@ -781,31 +824,35 @@ idiomGeo.setAttribute("aOrbA", new THREE.BufferAttribute(aOrbA, 1));
 idiomGeo.setAttribute("aOrbY", new THREE.BufferAttribute(aOrbY, 1));
 idiomGeo.setAttribute("aOrbS", new THREE.BufferAttribute(aOrbS, 1));
 
+// 生成“雄武奔跑马”点云：数量要明显大于 horse 粒子数，避免重复纹理感
+const HORSE_POINT_CLOUD_SIZE = Math.max(12000, Math.floor(MAX_PARTICLES * HORSE_RATIO * 1.35));
+const horseCloud = genHorsePointCloud(HORSE_POINT_CLOUD_SIZE);
+
+// 初始化粒子分组 & 银河参数
 for(let i=0;i<MAX_PARTICLES;i++){
   const s = Math.random();
   aSeed[i] = s;
 
-  // 初始随机云
   aPos[i*3+0]=(Math.random()-0.5)*3.2;
   aPos[i*3+1]=(Math.random()-0.5)*1.8;
   aPos[i*3+2]=(Math.random()-0.5)*1.4;
 
   aVel[i*3+0]=0; aVel[i*3+1]=0; aVel[i*3+2]=0;
 
-  // 分组：固定（稳定，不会来回变）
   const isHorse = (s < HORSE_RATIO);
   aKind[i] = isHorse ? 0.0 : 1.0;
 
-  // galaxy 参数（稳定）
-  const rr = lerp(1.2, IS_MOBILE ? 4.4 : 5.2, Math.pow(Math.random(), 0.55));
+  // horseRef：均匀散列到马点云 index（稳定，不随模式切换变化）
+  horseRef[i] = Math.floor(Math.random() * HORSE_POINT_CLOUD_SIZE);
+
+  // galaxy
+  const rr = lerp(1.4, IS_MOBILE ? 4.8 : 5.6, Math.pow(Math.random(), 0.55));
   aOrbR[i] = rr;
   aOrbA[i] = Math.random()*Math.PI*2;
-  aOrbY[i] = lerp(-0.85, 0.85, Math.random()) * (IS_MOBILE ? 0.85 : 1.0);
-  aOrbS[i] = lerp(0.55, 1.25, Math.random()) * (Math.random()<0.5 ? -1 : 1);
+  aOrbY[i] = lerp(-0.95, 0.95, Math.random()) * (IS_MOBILE ? 0.92 : 1.0);
+  aOrbS[i] = lerp(0.55, 1.35, Math.random()) * (Math.random()<0.5 ? -1 : 1);
 
-  // 目标数组默认 0
   aTar[i*3+0]=0; aTar[i*3+1]=0; aTar[i*3+2]=0;
-  aTarH[i*3+0]=0; aTarH[i*3+1]=0; aTarH[i*3+2]=0;
 }
 
 function rebuildIdiomTargets(text, { snap=false } = {}){
@@ -819,7 +866,6 @@ function rebuildIdiomTargets(text, { snap=false } = {}){
 
   const targetN = Math.max(1, Math.min(MAX_PARTICLES, Math.floor(pts.length/3)));
 
-  // 计算 bounds（用于红包环绕半径）
   let minX= 1e9, maxX=-1e9, minY= 1e9, maxY=-1e9;
   for(let i=0;i<targetN;i++){
     const x = pts[i*3+0], y = pts[i*3+1];
@@ -828,8 +874,9 @@ function rebuildIdiomTargets(text, { snap=false } = {}){
   }
   idiomBounds = { minX, maxX, minY, maxY };
 
-  const thickness = IS_MOBILE ? 0.65 : 0.95;
-  const strokeJit = IS_MOBILE ? 0.035 : 0.05;
+  // ✅ “厚重立体”：每个点增加 Z 厚度 + 轻微外扩
+  const thickness = IS_MOBILE ? 0.75 : 1.05;
+  const strokeJit = IS_MOBILE ? 0.038 : 0.055;
 
   for(let i=0;i<MAX_PARTICLES;i++){
     const idx = (i % targetN) * 3;
@@ -839,9 +886,8 @@ function rebuildIdiomTargets(text, { snap=false } = {}){
     aTar[i*3+0] = bx + randn() * strokeJit * 0.55;
     aTar[i*3+1] = by + randn() * strokeJit * 0.55;
 
-    const z = randn() * (thickness * 0.22);
-    const z2 = randn() * (thickness * 0.14);
-    aTar[i*3+2] = (z + z2);
+    const z = randn() * (thickness * 0.22) + randn() * (thickness * 0.16);
+    aTar[i*3+2] = z;
 
     if(snap){
       aPos[i*3+0] = aTar[i*3+0] + (Math.random()-0.5)*0.03;
@@ -856,35 +902,6 @@ function rebuildIdiomTargets(text, { snap=false } = {}){
     idiomGeo.attributes.position.needsUpdate = true;
     idiomGeo.attributes.aVel.needsUpdate = true;
   }
-}
-
-function rebuildHorseTargets(){
-  const horsePts = sampleRunningHorsePoints();
-  const horseN = Math.max(1, Math.floor(horsePts.length/3));
-
-  // 马形位置微偏移：更像“向前跑”
-  const ox = 0.0;
-  const oy = 0.0;
-  const oz = 0.0;
-
-  // 厚度/立体
-  const thick = IS_MOBILE ? 0.45 : 0.70;
-  const jit = IS_MOBILE ? 0.022 : 0.032;
-
-  let j = 0;
-  for(let i=0;i<MAX_PARTICLES;i++){
-    if(aKind[i] !== 0.0) continue; // 只给马组写目标
-    const idx = (j % horseN) * 3;
-    const x = horsePts[idx+0] + ox;
-    const y = horsePts[idx+1] + oy;
-
-    aTarH[i*3+0] = x + randn()*jit;
-    aTarH[i*3+1] = y + randn()*jit*0.8;
-    aTarH[i*3+2] = randn()*(thick*0.22) + randn()*(thick*0.14) + oz;
-
-    j++;
-  }
-  idiomGeo.attributes.aTarH.needsUpdate = true;
 }
 
 // ---------------------------
@@ -910,7 +927,6 @@ const idiomMat = new THREE.ShaderMaterial({
       vec3 p = position;
 
       float t = uTime*(0.40 + aSeed*0.85);
-      // 轻微呼吸（不会破坏图形）
       p.x += cos(t + aSeed*12.0) * (0.004 + aSeed*0.010);
       p.y += sin(t*0.9 + aSeed*10.0) * (0.004 + aSeed*0.010);
       p.z += sin(t*1.1 + aSeed* 8.0) * (0.003 + aSeed*0.008);
@@ -955,13 +971,11 @@ const idiomPoints = new THREE.Points(idiomGeo, idiomMat);
 idiomGroup.add(idiomPoints);
 idiomPoints.layers.enable(BLOOM_LAYER);
 
-// 初始固定一个成语（首次 snap）
+// 初始固定成语（稳定态）
 rebuildIdiomTargets(IDIOMS[Math.floor(Math.random()*IDIOMS.length)], { snap:true });
-// 初始建立马形目标（散开时用）
-rebuildHorseTargets();
 
 // ---------------------------
-// 红包系统（保持上一版：缩小 + 大小不一 + 凝聚态布朗运动）
+// 红包系统（缩小一半 + 大小不一 + 凝聚态四周布朗运动）
 // ---------------------------
 const ENVELOPES = IS_MOBILE ? 190 : 300;
 
@@ -970,6 +984,12 @@ envGroup.position.set(0, 2.25, 0);
 scene.add(envGroup);
 
 let envHomeRadius = 4.4;
+
+function recomputeEnvHomeRadius(){
+  const w = Math.max(3.4, (idiomBounds.maxX - idiomBounds.minX));
+  const h = Math.max(1.8, (idiomBounds.maxY - idiomBounds.minY));
+  envHomeRadius = Math.max(3.8, Math.min(6.2, Math.sqrt(w*w + h*h) * 0.95 + 1.25));
+}
 
 function makeRedEnvelopeTexture(){
   const c = document.createElement("canvas");
@@ -1017,7 +1037,9 @@ function makeRedEnvelopeTexture(){
 }
 const ENV_TEX = makeRedEnvelopeTexture();
 
+// ✅ 缩小一半
 const envGeo = new THREE.PlaneGeometry(0.14, 0.18, 1, 1);
+
 const envMat = new THREE.MeshBasicMaterial({
   map: ENV_TEX,
   transparent: true,
@@ -1037,12 +1059,6 @@ const envScale = new Array(ENVELOPES);
 const envSeed = new Array(ENVELOPES);
 const envBrown = new Array(ENVELOPES);
 const envBrownVel = new Array(ENVELOPES);
-
-function recomputeEnvHomeRadius(){
-  const w = Math.max(3.4, (idiomBounds.maxX - idiomBounds.minX));
-  const h = Math.max(1.8, (idiomBounds.maxY - idiomBounds.minY));
-  envHomeRadius = Math.max(3.8, Math.min(6.0, Math.sqrt(w*w + h*h) * 0.95 + 1.25));
-}
 
 function sampleEnvelopeHomeWorld(){
   const R = envHomeRadius;
@@ -1066,12 +1082,12 @@ function sampleScatterWorld(){
 }
 
 recomputeEnvHomeRadius();
-
 for(let i=0;i<ENVELOPES;i++){
   envHome[i] = sampleEnvelopeHomeWorld();
   envScatter[i] = sampleScatterWorld();
   envVel[i] = new THREE.Vector3(0,0,0);
 
+  // ✅ 大小不一：范围更广
   envScale[i] = lerp(0.55, 2.20, Math.pow(Math.random(), 0.72));
   envSeed[i] = Math.random()*1000;
 
@@ -1107,8 +1123,7 @@ function updateEnvelopes(time, dt){
       bv.y += (-b.y) * brownSpring * mergeK * dt;
       bv.z += (-b.z) * brownSpring * mergeK * dt;
 
-      const d = Math.exp(-brownDrag * dt);
-      bv.multiplyScalar(d);
+      bv.multiplyScalar(Math.exp(-brownDrag * dt));
 
       b.addScaledVector(bv, dt);
       if(b.length() > brownMax){
@@ -1178,7 +1193,7 @@ function kickScatterImpulse(){
 }
 
 // ---------------------------
-// 背景烟花（保留上一版实现）
+// 背景烟花（保持自然的小粒子）
 // ---------------------------
 function smoothstep(a,b,x){
   const t = clamp((x-a)/(b-a), 0, 1);
@@ -1320,7 +1335,7 @@ class Fireworks {
     }
   }
 
-  update(dt, time){
+  update(dt){
     this.spawnTimer -= dt;
     if(this.spawnTimer <= 0){
       this.spawnTimer = 0.55 + Math.random()*0.65;
@@ -1391,7 +1406,6 @@ class Fireworks {
 
     this.geo.attributes.position.needsUpdate = true;
     this.geo.attributes.color.needsUpdate = true;
-    this.mat.uniforms.uTime.value = time;
   }
 }
 const fireworks = new Fireworks(IS_MOBILE ? 5200 : 6800, IS_MOBILE ? 6 : 8);
@@ -1437,9 +1451,7 @@ function pickVideo(){
 }
 
 async function triggerRedPacketFlow(){
-  if(mode !== Mode.FOCUS){
-    setMode(Mode.FOCUS);
-  }
+  if(mode !== Mode.FOCUS) setMode(Mode.FOCUS);
 
   const idiom = pickIdiom();
   focusTitleEl.textContent = "红包到 · 好运到";
@@ -1459,7 +1471,7 @@ async function triggerRedPacketFlow(){
 }
 
 // ---------------------------
-// 手势识别（MediaPipe Hands）
+// 手势识别（明确区分：握拳=凝聚；三指捏合=抓红包）
 // ---------------------------
 let hands = null;
 let handEnabled = false;
@@ -1490,10 +1502,12 @@ function computeGesture(landmarks){
   const extCount = [thumbExt,indexExt,middleExt,ringExt,pinkyExt].filter(Boolean).length;
   const fist = (extCount <= 1);
 
+  // ✅ 三指捏合：拇指+食指+中指都要靠近（且不能是握拳）
   const th = landmarks[4], ix = landmarks[8], md = landmarks[12];
   const dTI = dist3(th, ix) / handSize;
   const dTM = dist3(th, md) / handSize;
   const dIM = dist3(ix, md) / handSize;
+
   const threePinch = (!fist) && (dTI < 0.40) && (dTM < 0.44) && (dIM < 0.40);
 
   const openHand = (extCount >= 4);
@@ -1518,9 +1532,8 @@ function handleGesture(g, dt){
     setMode(Mode.MERGE);
     statusText.textContent = `收拢中 → 凝聚：${newIdiom}`;
   }else if(g.openHand && !prevOpen){
-    // ✅ 散开：马形+银河（目标已准备好）
     setMode(Mode.SCATTER);
-    statusText.textContent = "散开态：奔跑马形粒子 + 银河环绕（移动手掌可旋转视角）";
+    statusText.textContent = "散开态：雄武奔跑马形粒子 + 银河环绕（移动手掌可旋转视角）";
   }else{
     pinchCooldown = Math.max(0, pinchCooldown - dt);
     if(g.threePinch && !prevThreePinch && pinchCooldown<=0 && !g.fist && !g.openHand){
@@ -1584,7 +1597,7 @@ async function startHands(){
 
   handEnabled=true;
   led.classList.add("on");
-  statusText.textContent="手势已启用：握拳=凝聚成语 / 张开=马形+银河 / 三指捏合=抓红包";
+  statusText.textContent="手势已启用：握拳=凝聚成语 / 张开=奔跑马+银河 / 三指捏合=抓红包";
 
   let busy=false, lastSent=0;
   async function pump(){
@@ -1607,7 +1620,7 @@ btnStart.addEventListener("click", async ()=>{
     await startHands();
     btnStart.textContent="手势识别已开启";
   }catch(e){
-    statusText.textContent="启用失败：请允许摄像头权限，并确保 HTTPS（GitHub Pages 默认满足）";
+    statusText.textContent="启用失败：请允许摄像头权限，并确保 HTTPS";
     btnStart.disabled=false;
     btnStart.textContent="启用手势识别";
   }
@@ -1620,7 +1633,6 @@ btnHelp.addEventListener("click", ()=>{
 btnReset.addEventListener("click", ()=>{
   const newIdiom = pickIdiom();
   rebuildIdiomTargets(newIdiom, { snap:true });
-  rebuildHorseTargets();
   recomputeEnvHomeRadius();
 
   for(let i=0;i<ENVELOPES;i++){
@@ -1640,6 +1652,82 @@ btnReset.addEventListener("click", ()=>{
 
   statusText.textContent=`已重置：合拢稳定态：${newIdiom}`;
 });
+
+// ---------------------------
+// ✅ 核心：散开态的“雄武奔跑马”动画（腿摆动 + 身体起伏 + 前倾冲刺感）
+// ---------------------------
+function horseAnimatedTarget(refIdx, time){
+  const x0 = horseCloud.ptsX[refIdx];
+  const y0 = horseCloud.ptsY[refIdx];
+  const z0 = horseCloud.ptsZ[refIdx];
+  const part = horseCloud.ptsPart[refIdx];
+
+  // 马整体：原地奔跑的“上下起伏 + 轻微前后摆”
+  const run = time * 6.2;         // 奔跑节奏
+  const bob = Math.sin(run) * 0.055;
+  const sway= Math.sin(run*0.5) * 0.030;
+
+  // 让马更“雄武”：整体放大一点
+  const scale = IS_MOBILE ? 1.05 : 1.10;
+
+  let x = x0 * scale;
+  let y = y0 * scale;
+  let z = z0 * 1.0;
+
+  // 身体与头：更稳，只有整体起伏
+  if(part === HorsePart.BODY || part === HorsePart.HEAD || part === HorsePart.MANE || part === HorsePart.TAIL){
+    x += sway;
+    y += bob;
+    // 头/鬃稍微更有力量感
+    if(part === HorsePart.HEAD) y += Math.sin(run*0.7) * 0.018;
+    if(part === HorsePart.MANE) y += Math.sin(run*1.0 + 1.2) * 0.014;
+    if(part === HorsePart.TAIL) x -= Math.sin(run*0.9 + 0.8) * 0.020;
+    return [x,y,z];
+  }
+
+  // 四腿：摆动更明显（制造“奔跑”）
+  // 每条腿相位不同：对角腿同步
+  const ampA = 0.32;   // 大摆
+  const ampB = 0.18;   // 小摆
+  let phase = 0;
+
+  if(part === HorsePart.LEG_FL) phase = 0.0;
+  if(part === HorsePart.LEG_BR) phase = 0.0;
+  if(part === HorsePart.LEG_FR) phase = Math.PI;
+  if(part === HorsePart.LEG_BL) phase = Math.PI;
+
+  // 腿摆动角（在髋部附近摆动）
+  const a = Math.sin(run + phase) * ampA + Math.sin(run*2.0 + phase) * ampB;
+
+  // 找一个粗略“髋部锚点”（根据腿的左右/前后）
+  let hipX = 0, hipY = 0;
+  if(part === HorsePart.LEG_FL){ hipX = 1.05; hipY = -0.05; }
+  if(part === HorsePart.LEG_FR){ hipX = 0.90; hipY =  0.00; }
+  if(part === HorsePart.LEG_BL){ hipX = -0.70; hipY = -0.10; }
+  if(part === HorsePart.LEG_BR){ hipX = -0.90; hipY = -0.05; }
+
+  hipX *= scale; hipY *= scale;
+
+  // 以髋部为旋转中心
+  const lx = x - hipX;
+  const ly = y - hipY;
+  const c = Math.cos(a), s = Math.sin(a);
+  const rx = lx*c - ly*s;
+  const ry = lx*s + ly*c;
+
+  x = hipX + rx + sway*0.6;
+  y = hipY + ry + bob*0.9;
+
+  // 蹄子触地：当腿往后甩时，略向下压（更有力）
+  const stomp = Math.max(0, Math.sin(run + phase));
+  y -= stomp * 0.06;
+
+  // 前后腿层次：微调 Z
+  if(part === HorsePart.LEG_FR || part === HorsePart.LEG_BR) z -= 0.10;
+  else z += 0.05;
+
+  return [x,y,z];
+}
 
 // ---------------------------
 // 渲染循环
@@ -1676,90 +1764,82 @@ function applyCamera(dt){
 }
 
 function updateIdiom(dt){
-  // ✅ 凝聚态绕Y轴旋转；散开态弱一些（让银河更显眼）
+  // 凝聚态绕Y轴旋转；散开态弱一些
   const rotSpeed =
     (mode===Mode.MERGE)  ? 0.22 :
     (mode===Mode.SCATTER)? 0.10 : 0.0;
   idiomGroup.rotation.y += dt * rotSpeed;
 
-  // 动力参数：让形体更稳（马更稳、银河更丝滑）
   const springMerge = 18.0;
   const springScatter = 14.0;
   const drag = 7.8;
 
-  // 银河中心（相对 idiomGroup 的局部坐标）
-  const cx = 0.0, cy = 0.0, cz = 0.0;
-
-  // 银河倾角（让它像“银河盘”）
-  const tilt = 0.42; // radians
+  // 银河倾角
+  const tilt = 0.42;
   const ct = Math.cos(tilt), st = Math.sin(tilt);
 
   for(let i=0;i<MAX_PARTICLES;i++){
     const px=aPos[i*3+0], py=aPos[i*3+1], pz=aPos[i*3+2];
     let vx=aVel[i*3+0], vy=aVel[i*3+1], vz=aVel[i*3+2];
 
-    const mergeK = (1.0 - mix);
     const scatterK = mix;
+    const mergeK = 1.0 - scatterK;
 
-    // MERGE 目标（成语）
+    // MERGE 目标：成语
     const mx=aTar[i*3+0], my=aTar[i*3+1], mz=aTar[i*3+2];
 
     // SCATTER 目标：马 or 银河
     let sx=0, sy=0, sz=0;
 
     if(aKind[i] === 0.0){
-      // 马形：使用 aTarH
-      sx = aTarH[i*3+0];
-      sy = aTarH[i*3+1];
-      sz = aTarH[i*3+2];
+      // ✅ “雄武奔跑马”：使用程序化点云 + 动画
+      const ref = horseRef[i];
+      const t = horseAnimatedTarget(ref, time);
+      sx = t[0];
+      sy = t[1];
+      sz = t[2];
 
-      // 小幅“奔跑感”摆动（不破坏轮廓）
+      // 轻微“气势”粒子呼吸（不破形）
       const s = aSeed[i];
-      sx += Math.sin(time*2.2 + s*9.0) * 0.010;
-      sy += Math.sin(time*3.0 + s*7.0) * 0.006;
+      sx += Math.sin(time*1.2 + s*11.0) * 0.010;
+      sy += Math.cos(time*1.0 + s*13.0) * 0.008;
+      sz += Math.sin(time*1.1 + s*9.0)  * 0.010;
+
     }else{
       // 银河：围绕马旋转
       const s = aSeed[i];
       const r = aOrbR[i];
-      const ang = aOrbA[i] + time * aOrbS[i] * (0.9 + s*0.25);
+      const ang = aOrbA[i] + time * aOrbS[i] * (0.92 + s*0.24);
 
-      let x = Math.cos(ang) * r;
-      let z = Math.sin(ang) * r;
-
-      // 让银河更“条带”：把半径做一点呼吸
       const rr = r * (0.96 + 0.04*Math.sin(time*0.8 + s*10.0));
-      x = Math.cos(ang) * rr;
-      z = Math.sin(ang) * rr;
-
-      // y 轻微上下波
+      let x = Math.cos(ang) * rr;
+      let z = Math.sin(ang) * rr;
       let y = aOrbY[i] + Math.sin(time*0.9 + s*8.0) * 0.10;
 
-      // 倾斜银河盘（绕X轴）
+      // 倾斜盘
       const y2 = y*ct - z*st;
       const z2 = y*st + z*ct;
 
-      sx = cx + x;
-      sy = cy + y2;
-      sz = cz + z2;
+      sx = x;
+      sy = y2;
+      sz = z2;
 
-      // 银河“颗粒”轻微抖动（不会抖散）
       sx += Math.sin(time*1.7 + s*21.0) * 0.010;
       sy += Math.cos(time*1.3 + s*17.0) * 0.008;
       sz += Math.sin(time*1.5 + s*19.0) * 0.010;
     }
 
-    // 最终目标：在 MERGE 与 SCATTER 之间插值（保证收拢时只呈现成语）
+    // 在 MERGE 和 SCATTER 之间插值（收拢时只显示成语）
     const tx = lerp(mx, sx, scatterK);
     const ty = lerp(my, sy, scatterK);
     const tz = lerp(mz, sz, scatterK);
 
-    // 吸附：在各自状态下都保持稳定
     const spring = springMerge*mergeK + springScatter*scatterK;
     vx += (tx - px) * spring * dt;
     vy += (ty - py) * spring * dt;
     vz += (tz - pz) * spring * dt;
 
-    // 散开时给一点流体感（不会破坏马/银河）
+    // 散开态的“流体感”（更自然）
     if(scatterK > 0.2){
       const s = aSeed[i];
       const wob = scatterK * 0.06;
@@ -1768,9 +1848,8 @@ function updateIdiom(dt){
       vz += Math.sin(time*0.55 + s*7.0) * wob * dt;
     }
 
-    vx *= Math.exp(-drag*dt);
-    vy *= Math.exp(-drag*dt);
-    vz *= Math.exp(-drag*dt);
+    const d = Math.exp(-drag*dt);
+    vx *= d; vy *= d; vz *= d;
 
     aPos[i*3+0] = px + vx;
     aPos[i*3+1] = py + vy;
@@ -1793,7 +1872,7 @@ function updateMood(dt){
     bloomPass.threshold= damp(bloomPass.threshold,0.17, 2.8, dt);
     renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.08, 2.2, dt);
   }else if(mode===Mode.SCATTER){
-    bloomPass.strength = damp(bloomPass.strength, 1.16, 2.8, dt);
+    bloomPass.strength = damp(bloomPass.strength, 1.18, 2.8, dt);
     bloomPass.radius   = damp(bloomPass.radius,   0.66, 2.8, dt);
     bloomPass.threshold= damp(bloomPass.threshold,0.16, 2.8, dt);
     renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.10, 2.2, dt);
@@ -1816,7 +1895,7 @@ function animate(){
     handleGesture(g, dt);
   }
 
-  // ✅ 收拢更丝滑：mix 下降慢一点
+  // 收拢更丝滑：mix 下降慢一点
   const mixLambda = (targetMix < mix) ? 1.65 : 2.4;
   mix = damp(mix, targetMix, mixLambda, dt);
 
@@ -1828,7 +1907,7 @@ function animate(){
   applyCamera(dt);
   updateIdiom(dt);
   updateEnvelopes(time, dt);
-  fireworks.update(dt, time);
+  fireworks.update(dt);
   updateMood(dt);
 
   camera.layers.set(BLOOM_LAYER);
@@ -1864,7 +1943,6 @@ horseVideo.muted = true;
 horseVideo.loop = true;
 horseVideo.playsInline = true;
 
-// 初始化红包 home（依赖 envHomeRadius）
 for(let i=0;i<ENVELOPES;i++){
   envHome[i] = sampleEnvelopeHomeWorld();
 }
