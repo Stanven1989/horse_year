@@ -6,17 +6,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>马年祝福 · 手势粒子成语 · 红包开封 · 烟花背景</title>
 
-  <!-- ES Module Shims (Import Maps) -->
   <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/build/three.module.js">
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/EffectComposer.js">
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/RenderPass.js">
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/UnrealBloomPass.js">
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/OutputPass.js">
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/ShaderPass.js">
 
   <script type="importmap-shim">
   {
@@ -27,21 +19,18 @@
   }
   </script>
 
-  <!-- MediaPipe Hands -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
 
   <style>
     :root{
       --gold:#d4af37;
       --red:#b11226;
-      --ink:#070a0c;
       --panel: rgba(10,10,12,.58);
       --panel2: rgba(4,6,9,.42);
       --line: rgba(212,175,55,.35);
       --text: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.65);
     }
-
     html,body{
       height:100%;
       margin:0;
@@ -50,13 +39,11 @@
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       overflow:hidden;
     }
-
     #app{ position:fixed; inset:0; }
     canvas#gl{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
 
     .cinema-vignette{
-      position:absolute; inset:0;
-      pointer-events:none;
+      position:absolute; inset:0; pointer-events:none;
       background:
         radial-gradient(120% 120% at 50% 45%, rgba(0,0,0,0) 42%, rgba(0,0,0,.62) 100%),
         radial-gradient(90% 70% at 50% 0%, rgba(212,175,55,.14) 0%, rgba(0,0,0,0) 60%),
@@ -254,7 +241,7 @@
           <span class="badge"></span>
           <div>
             <div class="title">马年祝福 · 手势粒子成语 · 红包开封 · 烟花背景</div>
-            <div class="subtitle">握拳：凝聚成语；张开：散开马奔跑；三指捏合：抓红包</div>
+            <div class="subtitle">握拳：凝聚成语；张开：散开湍流 + 马视频；三指捏合：抓红包</div>
           </div>
         </div>
 
@@ -315,14 +302,13 @@ const HORSE_VIDEOS = [
   "assets/videos/horse4.mp4"
 ];
 
-// ✅ 你的散开态奔跑马视频（WebM）
+// 你的散开态马视频
 const HORSE_RUN_WEBM = "assets/video/horse.webm";
 
 const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const DPR_CAP = IS_MOBILE ? 1.15 : 1.9;
 
-// ✅ Bloom 降负载（更顺滑，减少视频卡顿）
-// 你如果机器很强可以把 0.70 调到 0.85
+// Bloom 降负载
 const BLOOM_SCALE = IS_MOBILE ? 0.55 : 0.70;
 
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
@@ -415,7 +401,7 @@ finalComposer.addPass(bloomMixPass);
 finalComposer.addPass(new OutputPass());
 
 // ---------------------------
-// 模式 & 过渡（丝滑）
+// 模式 & 过渡
 // ---------------------------
 const Mode = { MERGE:"MERGE", SCATTER:"SCATTER", FOCUS:"FOCUS" };
 let mode = Mode.MERGE;
@@ -452,7 +438,7 @@ function showFocusOverlay(){ focusOverlay.classList.add("show"); }
 function hideFocusOverlay(){ focusOverlay.classList.remove("show"); packetEl.classList.remove("open"); }
 
 // ---------------------------
-// 纹理：小“点”纹理（用于银河/火花）
+// 点纹理（用于银河/火花）
 // ---------------------------
 function makeDotTexture(){
   const c = document.createElement("canvas");
@@ -475,8 +461,7 @@ function makeDotTexture(){
 const DOT_TEX = makeDotTexture();
 
 // ---------------------------
-// ✅ 散开态：奔跑马视频（必须在“后层”）
-// 关键点：renderOrder 设为很小，先画；星环/粒子后画，就不会被遮挡
+// 散开态：奔跑马视频（在后层）
 // ---------------------------
 const horseRunVideo = document.createElement("video");
 horseRunVideo.src = HORSE_RUN_WEBM;
@@ -501,36 +486,29 @@ horseGroup.visible = false;
 scene.add(horseGroup);
 
 const horsePlane = new THREE.Mesh(
-  new THREE.PlaneGeometry(6.4, 3.7),
+  new THREE.PlaneGeometry(6.6, 3.8),
   new THREE.MeshBasicMaterial({
     map: horseRunTex,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.96,
     depthWrite: false,
     depthTest: false,
     toneMapped: false
   })
 );
-
-// ✅ 先画视频，再画粒子/银河（避免遮挡）
 horsePlane.renderOrder = -100000;
-
-// ✅ 让它在 base layer 可见；是否参与 bloom 可选，这里只 base，避免闪与过亮
 horsePlane.layers.enable(0);
 
 horseGroup.add(horsePlane);
 horseGroup.position.set(0, 2.25, 0.65);
 
-function updateHorseBillboard(){
-  horsePlane.quaternion.copy(camera.quaternion);
-}
+function updateHorseBillboard(){ horsePlane.quaternion.copy(camera.quaternion); }
 function updateHorseMotion(t){
   horseGroup.position.y = 2.25 + Math.sin(t*6.2)*0.05;
   horseGroup.position.x = Math.sin(t*2.1)*0.03;
 }
 function setHorseScatterVisible(v){
   if(v){
-    // 只有 ready 才显示，避免黑帧闪
     horseGroup.visible = (horseReady || horseRunVideo.readyState >= 2);
     horseRunVideo.play().catch(()=>{});
   }else{
@@ -543,7 +521,7 @@ async function warmupVideo(v){
 }
 
 // ---------------------------
-// 银河星环（散开态显示，且在视频之上）
+// 银河星环（散开态显示，在视频之上）
 // ---------------------------
 class GalaxyRing {
   constructor(count = (IS_MOBILE ? 9000 : 16000)){
@@ -599,11 +577,7 @@ class GalaxyRing {
 
     this.points = new THREE.Points(this.geo, this.mat);
     this.points.frustumCulled = false;
-
-    // ✅ 必须在视频之上：renderOrder 大于视频
     this.points.renderOrder = 50000;
-
-    // base 可见 + bloom 可选；这里给一点 bloom
     this.points.layers.enable(0);
     this.points.layers.enable(BLOOM_LAYER);
 
@@ -637,7 +611,7 @@ class GalaxyRing {
 const galaxy = new GalaxyRing();
 
 // ---------------------------
-// 生成 “马” 字粒子纹理（成语粒子）
+// 生成 “马” 字粒子纹理（点精灵）
 // ---------------------------
 function makeMaGlyphTexture(){
   const c = document.createElement("canvas");
@@ -675,24 +649,28 @@ function makeMaGlyphTexture(){
 const MA_TEX = makeMaGlyphTexture();
 
 // ---------------------------
-// 文字采样：把四字成语变成点位
+// ✅ 成语点位采样：描边为主、填充为辅（解决“糊成一坨”+“边缘不清晰”）
 // ---------------------------
-function sampleTextPoints(text, {
+function sampleTextPointsStrokeFill(text, {
   fontSize = 190,
-  step = IS_MOBILE ? 3 : 2,     // ✅ 更密：更厚重
-  threshold = 8,
-  worldWidth = 7.6
+  worldWidth = 7.8,
+  // 描边更密，填充更稀
+  strokeStep = IS_MOBILE ? 4 : 3,
+  fillStep   = IS_MOBILE ? 9 : 7,
+  strokeThreshold = 12,
+  fillThreshold   = 60,
+  fillKeepProb    = 0.28, // 填充点保留概率（越小越空灵，轮廓越清晰）
 } = {}){
-  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1)); // ✅ 提高采样画布分辨率上限
   const c = document.createElement("canvas");
   const ctx = c.getContext("2d", { willReadFrequently: true });
 
   const font = `900 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
   ctx.font = font;
   const metrics = ctx.measureText(text);
-  const pad = Math.ceil(fontSize * 0.45);
+  const pad = Math.ceil(fontSize * 0.55);
   const cssW = Math.ceil(metrics.width + pad * 2);
-  const cssH = Math.ceil(fontSize * 1.28 + pad * 2);
+  const cssH = Math.ceil(fontSize * 1.38 + pad * 2);
 
   c.width  = Math.ceil(cssW * dpr);
   c.height = Math.ceil(cssH * dpr);
@@ -700,42 +678,67 @@ function sampleTextPoints(text, {
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,cssW,cssH);
 
+  // --- 1) stroke-only layer ---
   ctx.font = font;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";
-  ctx.lineWidth = Math.max(10, Math.round(fontSize*0.06));
-  ctx.strokeStyle = "rgba(177,18,38,1)";
+  ctx.miterLimit = 2;
+
+  const strokeW = Math.max(12, Math.round(fontSize*0.085)); // ✅ 稍加粗描边，提升复杂字可读性
+  ctx.lineWidth = strokeW;
+  ctx.strokeStyle = "rgba(255,255,255,1)";
   ctx.strokeText(text, cssW/2, cssH/2);
+
+  const strokeData = ctx.getImageData(0,0,c.width,c.height).data;
+
+  // --- 2) fill-only layer ---
+  ctx.clearRect(0,0,cssW,cssH);
+  ctx.font = font;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
   ctx.fillStyle = "rgba(255,255,255,1)";
   ctx.fillText(text, cssW/2, cssH/2);
 
-  const img = ctx.getImageData(0,0,c.width,c.height).data;
-  const pts = [];
-  const stepPx = Math.max(1, Math.round(step * dpr));
+  const fillData = ctx.getImageData(0,0,c.width,c.height).data;
 
-  for(let y=0;y<c.height;y+=stepPx){
-    for(let x=0;x<c.width;x+=stepPx){
-      const a = img[(y*c.width + x)*4 + 3];
-      if(a > threshold) pts.push([x/dpr, y/dpr]);
+  const pts = [];
+
+  const scale = worldWidth / cssW;
+  const strokeStepPx = Math.max(1, Math.round(strokeStep * dpr));
+  const fillStepPx   = Math.max(1, Math.round(fillStep   * dpr));
+
+  // 描边点（更密）
+  for(let y=0;y<c.height;y+=strokeStepPx){
+    for(let x=0;x<c.width;x+=strokeStepPx){
+      const a = strokeData[(y*c.width + x)*4 + 3];
+      if(a > strokeThreshold){
+        const xCss = x/dpr, yCss = y/dpr;
+        const px = (xCss - cssW/2)*scale;
+        const py = (cssH/2 - yCss)*scale;
+        pts.push(px, py, 0);
+      }
     }
   }
 
-  const scale = worldWidth / cssW;
-  const out = new Float32Array(pts.length*3);
-  for(let i=0;i<pts.length;i++){
-    const [xCss,yCss]=pts[i];
-    const px=(xCss - cssW/2)*scale;
-    const py=(cssH/2 - yCss)*scale;
-    out[i*3+0]=px;
-    out[i*3+1]=py;
-    out[i*3+2]=0;
+  // 填充点（更稀，且概率保留）
+  for(let y=0;y<c.height;y+=fillStepPx){
+    for(let x=0;x<c.width;x+=fillStepPx){
+      const a = fillData[(y*c.width + x)*4 + 3];
+      if(a > fillThreshold && Math.random() < fillKeepProb){
+        const xCss = x/dpr, yCss = y/dpr;
+        const px = (xCss - cssW/2)*scale;
+        const py = (cssH/2 - yCss)*scale;
+        pts.push(px, py, 0);
+      }
+    }
   }
-  return out;
+
+  return new Float32Array(pts);
 }
 
 // ---------------------------
-// 成语粒子系统（凝聚态稳定；散开态稀释）
+// 成语粒子系统
 // ---------------------------
 const idiomGroup = new THREE.Group();
 idiomGroup.position.set(0, 2.25, 0);
@@ -743,14 +746,17 @@ scene.add(idiomGroup);
 
 let envHomeRingR = 3.2;
 
-// ✅ 粒子数量：更厚重但可控
-const MAX_PARTICLES = IS_MOBILE ? 15000 : 26000;
+// ✅ 取消“过大 MAX + 复制点位导致糊”
+// 桌面给 14000 左右足够，移动端更低
+const MAX_PARTICLES = IS_MOBILE ? 8500 : 14000;
 
 const idiomGeo = new THREE.BufferGeometry();
 const aPos = new Float32Array(MAX_PARTICLES*3);
 const aVel = new Float32Array(MAX_PARTICLES*3);
 const aTar = new Float32Array(MAX_PARTICLES*3);
 const aSeed= new Float32Array(MAX_PARTICLES);
+
+let activeCount = MAX_PARTICLES; // 实际渲染粒子数（会随成语采样点变化）
 
 idiomGeo.setAttribute("position", new THREE.BufferAttribute(aPos, 3));
 idiomGeo.setAttribute("aVel", new THREE.BufferAttribute(aVel, 3));
@@ -776,34 +782,45 @@ let currentIdiomStableUntil = 0;
 function pickIdiom(){ return IDIOMS[Math.floor(Math.random()*IDIOMS.length)]; }
 function pickVideo(){ return HORSE_VIDEOS[Math.floor(Math.random()*HORSE_VIDEOS.length)]; }
 
-// ✅ 只在“触发时”更新目标；并给一点厚度（z+jitter）让成语更立体
+// ✅ 只用“有效点位数量”，不再强行复制到 MAX
 function rebuildIdiomTargets(text){
   currentIdiom = text;
 
-  const pts = sampleTextPoints(text, {
+  const pts = sampleTextPointsStrokeFill(text, {
     fontSize: 190,
-    step: IS_MOBILE ? 3 : 2,
-    worldWidth: IS_MOBILE ? 7.0 : 7.9
+    worldWidth: IS_MOBILE ? 7.0 : 7.9,
+    strokeStep: IS_MOBILE ? 4 : 3,
+    fillStep:   IS_MOBILE ? 10 : 8,
+    fillKeepProb: IS_MOBILE ? 0.22 : 0.26
   });
 
   const targetN = Math.max(1, Math.floor(pts.length/3));
+  activeCount = Math.min(MAX_PARTICLES, targetN);
 
-  for(let i=0;i<MAX_PARTICLES;i++){
-    const idx = (i % targetN) * 3;
+  for(let i=0;i<activeCount;i++){
+    const idx = i*3;
 
     const baseX = pts[idx+0];
     const baseY = pts[idx+1];
 
-    // ✅ 立体厚度：沿 z 方向分层 + x/y 细抖动
+    // ✅ 立体厚度（适度，不再把内部塞爆）
     const seed = aSeed[i];
-    const z = (seed - 0.5) * (IS_MOBILE ? 0.55 : 0.80);
-    const j = (seed - 0.5) * (IS_MOBILE ? 0.05 : 0.08);
+    const z = (seed - 0.5) * (IS_MOBILE ? 0.45 : 0.62);
+    const j = (seed - 0.5) * (IS_MOBILE ? 0.03 : 0.05);
 
     aTar[i*3+0] = baseX + j;
     aTar[i*3+1] = baseY - j;
     aTar[i*3+2] = z;
   }
 
+  // 多余粒子（未使用）放远处，避免形成中心亮团
+  for(let i=activeCount;i<MAX_PARTICLES;i++){
+    aTar[i*3+0] = 999;
+    aTar[i*3+1] = 999;
+    aTar[i*3+2] = 999;
+  }
+
+  idiomGeo.setDrawRange(0, activeCount);
   idiomGeo.attributes.aTar.needsUpdate = true;
   idiomGeo.computeBoundingSphere();
   envHomeRingR = Math.max(2.8, Math.min(5.6, (idiomGeo.boundingSphere?.radius || 3.6) * 1.10));
@@ -819,7 +836,7 @@ const idiomMat = new THREE.ShaderMaterial({
     uMix: { value: 0 },
     uFocus: { value: 0 },
     uMap: { value: MA_TEX },
-    uScatterFade: { value: 0.35 } // 散开时成语粒子更淡
+    uScatterFade: { value: 0.22 } // ✅ 散开仍可见但不遮挡
   },
   vertexShader: `
     uniform float uTime;
@@ -849,11 +866,11 @@ const idiomMat = new THREE.ShaderMaterial({
 
       float dist = max(0.001, -mv.z);
 
-      float tw = 0.86 + 0.14*sin(uTime*2.2 + aSeed*9.0);
-      float size = (uMix < 0.5) ? 1.15 : 0.95; // 凝聚稍大一点更厚重
-      gl_PointSize = clamp(size*tw*(120.0/dist), 0.7, 2.4);
+      float tw = 0.90 + 0.10*sin(uTime*2.2 + aSeed*9.0);
+      float size = (uMix < 0.5) ? 1.05 : 0.90;
+      gl_PointSize = clamp(size*tw*(120.0/dist), 0.7, 2.2);
 
-      vGlow = 0.55 + 0.45*sin(uTime*2.0 + aSeed*11.0);
+      vGlow = 0.60 + 0.40*sin(uTime*2.0 + aSeed*11.0);
       vAlpha = mix(1.0, uScatterFade, uMix);
     }
   `,
@@ -876,25 +893,22 @@ const idiomMat = new THREE.ShaderMaterial({
       col = mix(col, red, smoothstep(0.78, 0.98, vSeed)*0.45);
 
       float a = m.a * (0.55 + 0.65*vGlow) * vAlpha;
-      gl_FragColor = vec4(col * (1.15 + 0.55*m.a), a);
+      gl_FragColor = vec4(col * (1.10 + 0.55*m.a), a);
     }
   `
 });
 
 const idiomPoints = new THREE.Points(idiomGeo, idiomMat);
 idiomPoints.frustumCulled = false;
-
-// ✅ 在视频上层：renderOrder 比视频大
 idiomPoints.renderOrder = 60000;
-
 idiomGroup.add(idiomPoints);
 idiomPoints.layers.enable(BLOOM_LAYER);
 
-// 初始成语：稳定
+// 初始成语
 rebuildIdiomTargets(pickIdiom());
 
 // ---------------------------
-// 红包系统（凝聚环绕 + 散开漂散；大小缩小一半+有大有小）
+// 红包系统（保持你之前的逻辑；略）
 // ---------------------------
 const ENVELOPES = IS_MOBILE ? 160 : 240;
 const envGroup = new THREE.Group();
@@ -936,9 +950,7 @@ function makeRedEnvelopeTexture(){
 }
 const ENV_TEX = makeRedEnvelopeTexture();
 
-// ✅ 尺寸缩小一半
 const envGeo = new THREE.PlaneGeometry(0.14, 0.18, 1, 1);
-
 const envMat = new THREE.MeshBasicMaterial({
   map: ENV_TEX,
   transparent: true,
@@ -950,10 +962,7 @@ const envMat = new THREE.MeshBasicMaterial({
 
 const envMesh = new THREE.InstancedMesh(envGeo, envMat, ENVELOPES);
 envMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-
-// ✅ 在视频上层
 envMesh.renderOrder = 65000;
-
 envGroup.add(envMesh);
 envMesh.layers.enable(BLOOM_LAYER);
 
@@ -964,7 +973,6 @@ const envScale = new Array(ENVELOPES);
 const envSeed = new Array(ENVELOPES);
 
 function sampleEnvelopeHomeLocal(){
-  // 环绕成语：一个“包裹环”
   const ang = Math.random() * Math.PI * 2;
   const r = envHomeRingR * (0.78 + Math.random() * 0.55);
   const y = (Math.random()-0.5) * 1.35;
@@ -988,8 +996,6 @@ for(let i=0;i<ENVELOPES;i++){
   envHomeLocal[i] = sampleEnvelopeHomeLocal();
   envScatterWorld[i] = sampleScatterWorld();
   envVelWorld[i] = new THREE.Vector3(0,0,0);
-
-  // ✅ 有大有小（整体更小）
   envScale[i] = lerp(0.45, 1.15, Math.pow(Math.random(), 0.65));
   envSeed[i] = Math.random()*1000;
 }
@@ -999,12 +1005,9 @@ const _tmp = new THREE.Vector3();
 const _homeWorld = new THREE.Vector3();
 
 function updateEnvelopes(time, dt){
-  // ✅ 凝聚态：稳定“布朗运动”围绕 home，不会跳
-  // ✅ 散开态：漂散 + 速度衰减
   for(let i=0;i<ENVELOPES;i++){
     const seed = envSeed[i];
 
-    // home 的微扰（布朗感）
     const wobx = Math.sin(time*(0.9 + (seed%1.0)*1.2) + seed) * 0.06;
     const woby = Math.cos(time*(0.8 + (seed%1.0)*1.3) + seed*1.7) * 0.07;
     const wobz = Math.sin(time*(0.7 + (seed%1.0)*1.1) + seed*1.3) * 0.06;
@@ -1017,26 +1020,19 @@ function updateEnvelopes(time, dt){
     const sW = envScatterWorld[i];
     const vW = envVelWorld[i];
 
-    // scatter 漂移
     vW.multiplyScalar(Math.pow(0.92, dt*60.0));
     sW.addScaledVector(vW, dt);
     sW.y += Math.sin(time*0.9 + seed)*0.012;
 
-    // home -> world
     idiomGroup.updateMatrixWorld(true);
     _tmp.copy(_homeWorld).applyMatrix4(idiomGroup.matrixWorld);
 
-    // mix 插值：0 聚拢，1 散开
     const x = lerp(_tmp.x, sW.x, mix);
     const y = lerp(_tmp.y, sW.y, mix);
     const z = lerp(_tmp.z, sW.z, mix);
 
     _obj.position.set(x,y,z);
-
-    // billboard
     _obj.quaternion.copy(camera.quaternion);
-
-    // 凝聚时更稳定，散开时稍飘
     _obj.rotateZ(Math.sin(time*0.7 + seed)*0.12*(1.0-mix) + Math.sin(time*0.35+seed)*0.08*mix);
 
     const s = envScale[i] * (1.0 - focus*0.08);
@@ -1048,27 +1044,19 @@ function updateEnvelopes(time, dt){
   envMesh.instanceMatrix.needsUpdate = true;
 }
 
-// 散开冲量（红包）
 function kickScatterImpulse(){
-  const center = new THREE.Vector3();
-  center.copy(idiomGroup.position);
-  idiomGroup.updateMatrixWorld(true);
-  center.applyMatrix4(idiomGroup.matrixWorld);
-
   for(let i=0;i<ENVELOPES;i++){
     const p = envScatterWorld[i];
-    const dir = new THREE.Vector3().subVectors(p, center).normalize();
+    const dir = new THREE.Vector3(p.x, p.y-2.25, p.z).normalize();
     dir.x += (Math.random()-0.5)*0.35;
     dir.y += (Math.random()-0.2)*0.25;
     dir.z += (Math.random()-0.5)*0.35;
     dir.normalize();
-
     const kick = 2.2 + Math.random()*4.0;
     envVelWorld[i].addScaledVector(dir, kick);
   }
 
-  // 成语粒子冲量（让散开更有爆发）
-  for(let i=0;i<MAX_PARTICLES;i++){
+  for(let i=0;i<activeCount;i++){
     const sx = (Math.random()-0.5);
     const sy = (Math.random()-0.2);
     const sz = (Math.random()-0.5);
@@ -1082,7 +1070,8 @@ function kickScatterImpulse(){
 }
 
 // ---------------------------
-// 背景烟花（始终存在，但散开态降低强度，给视频留性能）
+// 背景烟花（省略：保持与你原来一致的 Fireworks 类即可）
+// 为缩短粘贴，我保留一个轻量版：
 // ---------------------------
 class Fireworks {
   constructor(maxParticles=(IS_MOBILE?4200:6500)){
@@ -1130,13 +1119,9 @@ class Fireworks {
 
     this.points=new THREE.Points(this.geo,this.mat);
     this.points.frustumCulled=false;
-
-    // 在视频上层但更靠后
     this.points.renderOrder = 20000;
-
     this.points.layers.enable(0);
     this.points.layers.enable(BLOOM_LAYER);
-
     scene.add(this.points);
     this.spawnTimer=0;
   }
@@ -1237,7 +1222,7 @@ async function triggerRedPacketFlow(){
 }
 
 // ---------------------------
-// 手势识别（关键：握拳=凝聚；张开=散开；三指捏合=抓红包）
+// 手势识别（握拳=凝聚；张开=散开；三指捏合=抓红包）
 // ---------------------------
 let hands = null;
 let handEnabled = false;
@@ -1269,7 +1254,6 @@ function computeGesture(lm){
   const openHand = (extCount >= 4);
   const closeHand = (extCount <= 1);
 
-  // ✅ 三指捏合：拇+食+中都互相接近（严格区分于握拳）
   const dTI = dist2(lm[4], lm[8]) / handSize;
   const dTM = dist2(lm[4], lm[12]) / handSize;
   const dIM = dist2(lm[8], lm[12]) / handSize;
@@ -1294,17 +1278,15 @@ function handleGesture(g, dt, nowMs){
     setMode(Mode.SCATTER);
   }
 
-  // ✅ 握拳：只触发一次（边沿），并且锁定一个新成语，不会在凝聚过程中乱变
   if(closeEdge){
     const newIdiom = pickIdiom();
     rebuildIdiomTargets(newIdiom);
 
-    // 每次握拳更新红包home一次即可（避免跳动）
     for(let i=0;i<ENVELOPES;i++){
       envHomeLocal[i] = sampleEnvelopeHomeLocal();
     }
 
-    currentIdiomStableUntil = nowMs + 1200; // 锁定一小段时间，防止抖动误触发多次
+    currentIdiomStableUntil = nowMs + 1200;
     setMode(Mode.MERGE);
   }
 
@@ -1372,10 +1354,7 @@ btnStart.addEventListener("click", async ()=>{
   try{
     btnStart.disabled=true;
     btnStart.textContent="启用中…";
-
-    // ✅ 预热 webm（减少首次卡顿/黑帧/闪）
     await warmupVideo(horseRunVideo);
-
     await startHands();
     btnStart.textContent="手势识别已开启";
   }catch(e){
@@ -1398,13 +1377,12 @@ btnReset.addEventListener("click", ()=>{
 });
 
 // ---------------------------
-// 相机控制
+// 相机（保持）
 // ---------------------------
 let yaw=0.0, pitch=0.14, radius=10.4;
 let yawT=yaw, pitchT=pitch;
 
 let dragging=false, lastX=0, lastY=0;
-
 canvas.addEventListener("pointerdown",(e)=>{
   dragging=true; lastX=e.clientX; lastY=e.clientY;
 });
@@ -1420,31 +1398,86 @@ window.addEventListener("pointermove",(e)=>{
 });
 
 // ---------------------------
-// 物理更新：成语粒子（凝聚+散开）
+// ✅ 散开态湍流场（核心：把粒子从字形拉走，形成湍流，并留出中心空腔给视频）
 // ---------------------------
-function updateIdiom(dt, time){
-  // ✅ 凝聚态：绕Y轴旋转（你要求的）
-  if(mode === Mode.MERGE && focus < 0.1){
-    idiomGroup.rotation.y += dt * 0.25;
-  }else{
-    // 其它状态轻微
-    idiomGroup.rotation.y += dt * 0.10;
+function turbulenceAccel(px, py, pz, seed, time){
+  // 湍流围绕中心旋转 + 垂直扰动 + 环形约束
+  const cx = 0, cy = 0, cz = 0;
+
+  const rx = px - cx;
+  const rz = pz - cz;
+  const r  = Math.sqrt(rx*rx + rz*rz) + 1e-4;
+
+  // 中心空腔：半径内强斥力，确保视频不被遮挡
+  const holeR = 1.55;
+  let ax = 0, ay = 0, az = 0;
+
+  if(r < holeR){
+    const rep = (holeR - r) * 10.0;
+    ax += (rx / r) * rep;
+    az += (rz / r) * rep;
   }
 
-  const spring = 7.8;
-  const drag   = 3.8;
+  // 目标环带：让湍流围绕视频形成“旋转河流”
+  const ringR = 3.1;
+  const radial = (ringR - r) * 1.45;
+  ax += (rx / r) * radial;
+  az += (rz / r) * radial;
 
-  for(let i=0;i<MAX_PARTICLES;i++){
+  // 旋涡：切向速度（顺/逆随 seed）
+  const dir = (seed < 0.5) ? 1.0 : -1.0;
+  const swirl = (2.6 + 1.2*Math.sin(time*0.7 + seed*7.0)) * dir;
+  ax += (-rz / r) * swirl;
+  az += ( rx / r) * swirl;
+
+  // 垂直扰动（让湍流“厚”起来）
+  ay += Math.sin(time*2.0 + seed*13.0 + px*0.7) * 1.15;
+  ay += Math.cos(time*1.6 + seed*9.0  + pz*0.6) * 0.85;
+
+  return { ax, ay, az };
+}
+
+// ---------------------------
+// 成语粒子更新（凝聚 + 散开湍流）
+// ---------------------------
+function updateIdiom(dt, time){
+  // ✅ 凝聚态：旋转更快
+  if(mode === Mode.MERGE && focus < 0.1){
+    idiomGroup.rotation.y += dt * 0.55; // 原来 0.25
+  }else{
+    idiomGroup.rotation.y += dt * 0.12;
+  }
+
+  const spring = 7.4;
+  const drag   = 3.9;
+
+  // mix 越大越散开，pull 越小
+  const pull = (1.0 - mix);
+
+  for(let i=0;i<activeCount;i++){
     const px=aPos[i*3+0], py=aPos[i*3+1], pz=aPos[i*3+2];
     let vx=aVel[i*3+0], vy=aVel[i*3+1], vz=aVel[i*3+2];
 
     const tx=aTar[i*3+0], ty=aTar[i*3+1], tz=aTar[i*3+2];
 
-    // mix 越小，越强“吸回目标”
-    const pull = (1.0 - mix);
-    const ax = (tx - px) * spring * pull;
-    const ay = (ty - py) * spring * pull;
-    const az = (tz - pz) * spring * pull;
+    // 凝聚吸回字形
+    let ax = (tx - px) * spring * pull;
+    let ay = (ty - py) * spring * pull;
+    let az = (tz - pz) * spring * pull;
+
+    // ✅ 散开湍流：当 mix 上来后，给强湍流加速度，把字形彻底打散
+    const scatter01 = clamp((mix - 0.12) / 0.88, 0, 1);
+    if(scatter01 > 0){
+      const seed = aSeed[i];
+      const t = turbulenceAccel(px, py, pz, seed, time);
+      ax += t.ax * scatter01;
+      ay += t.ay * scatter01;
+      az += t.az * scatter01;
+
+      // 轻微噪声，增加“湍流毛刺感”
+      ax += Math.sin(time*3.0 + seed*17.0) * 0.35 * scatter01;
+      az += Math.cos(time*2.6 + seed*19.0) * 0.35 * scatter01;
+    }
 
     vx += ax*dt; vy += ay*dt; vz += az*dt;
 
@@ -1452,8 +1485,8 @@ function updateIdiom(dt, time){
     vy *= Math.exp(-drag*dt);
     vz *= Math.exp(-drag*dt);
 
-    // 散开时保留更多惯性
-    const keep = 0.58 + 0.42*mix;
+    // 散开时保留更多动量
+    const keep = 0.56 + 0.44*mix;
     vx *= keep; vy *= keep; vz *= keep;
 
     aPos[i*3+0] = px + vx*dt;
@@ -1470,7 +1503,7 @@ function updateIdiom(dt, time){
 }
 
 // ---------------------------
-// 相机 & mood
+// 相机
 // ---------------------------
 function applyCamera(dt, time){
   if(mode===Mode.MERGE){
@@ -1500,7 +1533,7 @@ function applyCamera(dt, time){
 }
 
 // ---------------------------
-// 渲染循环
+// 动画循环
 // ---------------------------
 let time=0;
 let lastTime=performance.now();
@@ -1511,28 +1544,22 @@ function animate(){
   lastTime=now;
   time += dt;
 
-  // gesture
   if(handEnabled && lastLandmarks && (now-lastLandmarksTs) < 180){
-    // ✅ 如果握拳刚触发并锁定，短时间内不重复触发（防抖）
     const g = computeGesture(lastLandmarks);
     if(now < currentIdiomStableUntil){
-      // 仍可允许 pinch，但不允许 close/open 反复抖
       handleGesture({ openHand:false, closeHand:false, pinch3:g.pinch3 }, dt, now);
     }else{
       handleGesture(g, dt, now);
     }
   }
 
-  // smooth transitions
   mix = damp(mix, targetMix, 2.6, dt);
   targetFocus = (mode===Mode.FOCUS) ? 1 : 0;
   focus = damp(focus, targetFocus, 4.0, dt);
 
-  // scatter 星环强度（在散开逐步显现）
   const scatter01 = clamp((mix - 0.10)/0.90, 0, 1);
   galaxy.update(time, scatter01);
 
-  // horse (scatter)
   if(mode===Mode.SCATTER){
     if(horseReady || horseRunVideo.readyState>=2) horseGroup.visible = true;
     updateHorseMotion(time);
@@ -1541,7 +1568,6 @@ function animate(){
   }
   updateHorseBillboard();
 
-  // fireworks：散开态降低强度（减负）
   const fwOpacity = lerp(1.0, 0.35, scatter01);
   fireworks.update(dt, fwOpacity);
 
@@ -1549,12 +1575,10 @@ function animate(){
   updateIdiom(dt, time);
   updateEnvelopes(time, dt);
 
-  // bloom mood（小幅动态，避免闪）
   bloomPass.strength = damp(bloomPass.strength, lerp(1.08, 0.92, scatter01), 2.8, dt);
   bloomPass.radius   = damp(bloomPass.radius,   0.62, 2.8, dt);
   bloomPass.threshold= damp(bloomPass.threshold,0.16, 2.8, dt);
 
-  // render bloom + final（保持你原结构）
   camera.layers.set(BLOOM_LAYER);
   bloomComposer.render();
   camera.layers.set(0);
@@ -1565,18 +1589,16 @@ function animate(){
 requestAnimationFrame(animate);
 
 // ---------------------------
-// Resize（Bloom 降分辨率渲染）
+// Resize
 // ---------------------------
 function onResize(){
   const w=window.innerWidth, h=window.innerHeight;
-
   const pr = Math.min(DPR_CAP, window.devicePixelRatio || 1);
   renderer.setPixelRatio(pr);
   renderer.setSize(w,h,false);
 
   camera.aspect=w/h; camera.updateProjectionMatrix();
 
-  // ✅ bloom 低分辨率
   const bw = Math.max(2, Math.floor(w * BLOOM_SCALE));
   const bh = Math.max(2, Math.floor(h * BLOOM_SCALE));
   bloomComposer.setSize(bw,bh);
@@ -1588,13 +1610,11 @@ window.addEventListener("resize", onResize);
 onResize();
 
 // ---------------------------
-// 初始状态：凝聚态可见
+// 初始化
 // ---------------------------
 statusText.textContent = "已加载：凝聚态（稳定成语 + 红包环绕）";
-
 for(let i=0;i<ENVELOPES;i++) envHomeLocal[i] = sampleEnvelopeHomeLocal();
 
-// focus overlay video
 horseVideo.muted = true;
 horseVideo.loop = true;
 horseVideo.playsInline = true;
